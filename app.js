@@ -3,6 +3,8 @@ const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw4o42FhIcR4mcGG1chH
 let charactersData = [];
 let selectedCharaTab1 = null;
 let selectedCharaTab2 = null;
+let selectedCharaSim = null;
+let currentOutfitIndex = 0; // 0: Default, 1: Bond
 let reporteGuardado = [];
 
 const FONS_ICON_URL = 'https://lh3.googleusercontent.com/d/1eFSFZPncsRkZU-yORmU10zoxF5zwjt7T';
@@ -15,10 +17,29 @@ const ACUMULADO_HASTA_NIVEL = [0, 100, 600, 1600, 3600, 7100, 12100, 19100, 2810
 const AFINIDAD_MAX = 56100;
 const AFINIDAD_ITEMS_MAX = 56000;
 
+// Mapa de colores predefinidos actualizados con Gris y otros tonos
+const COLOR_MAP = {
+  'rojo': '#ef4444',
+  'azul': '#3b82f6',
+  'amarillo': '#eab308',
+  'verde': '#22c55e',
+  'morado': '#a855f7',
+  'cian': '#06b6d4',
+  'rosa': '#ec4899',
+  'naranja': '#f97316',
+  'gris': '#94a3b8',
+  'turquesa': '#14b8a6', 
+  'blanco': '#f8fafc',
+  'dorado': '#fbbf24'
+};
+
 const translations = {
   es: {
+    tabInicio: "Inicio",
     tabPersonajes: "Personajes",
     tabCalcular: "Calcular Afinidad",
+    tabSimulador: "Simulador",
+    seleccionarEsper: "Seleccionar Esper",
     bonoAfinidad: "Bono de afinidad nivel 10",
     outfit: "Outfit",
     itemLabel: "Item",
@@ -49,11 +70,21 @@ const translations = {
     regalosSinCondicion: "Regalos sin condición",
     cartaEscritaMano: "Carta escrita a mano",
     boletoCineFloe: "Boleto del cine Floe",
-    simularDesdeCero: "Simular nivel y afinidad final desde cero"
+    enviarACalcular: "Enviar datos a \"Calcular Afinidad\"",
+    tablaProgresion: "TABLA DE PROGRESIÓN DE NIVEL",
+    afinidadAcumulada: "AFINIDAD ACUMULADA",
+    afinidadRequerida: "AFINIDAD REQUERIDA",
+    defaultAttire: "Default Attire",
+    bondAttire: "Bond Attire",
+    tabla: "ESTADÍSTICAS",
+    aplicarRegalos: "✓ Aplicar regalos al perfil"
   },
   en: {
+    tabInicio: "Home",
     tabPersonajes: "Characters",
     tabCalcular: "Calculate Affection",
+    tabSimulador: "Simulator",
+    seleccionarEsper: "Select Esper",
     bonoAfinidad: "Level 10 Affection Bonus",
     outfit: "Outfit",
     itemLabel: "Item",
@@ -84,7 +115,14 @@ const translations = {
     regalosSinCondicion: "Unconditional Gifts",
     cartaEscritaMano: "Handwritten Letter",
     boletoCineFloe: "Floe Cinema Ticket",
-    simularDesdeCero: "Simulate level and final affection from scratch"
+    enviarACalcular: "Send data to \"Calculate Affection\"",
+    tablaProgresion: "LEVEL PROGRESSION TABLE",
+    afinidadAcumulada: "ACCUMULATED AFFECTION",
+    afinidadRequerida: "REQUIRED AFFECTION",
+    defaultAttire: "Default Attire",
+    bondAttire: "Bond Attire",
+    tabla: "STATISTICS",
+    aplicarRegalos: "✓ Apply gifts to profile"
   }
 };
 
@@ -97,6 +135,16 @@ window.onload = function() {
     document.body.classList.add('dark-mode');
   }
   
+  const toggleSidebarBtn = document.getElementById('toggleSidebarBtn');
+  if (toggleSidebarBtn) {
+    toggleSidebarBtn.addEventListener('click', () => {
+      const sidebar = document.getElementById('appSidebar');
+      if (sidebar) {
+        sidebar.classList.toggle('collapsed');
+      }
+    });
+  }
+
   const savedReport = localStorage.getItem('reporteGuardado');
   if (savedReport) {
     try {
@@ -139,9 +187,11 @@ function toggleLanguage() {
   aplicarTraducciones();
   recalculate();
   renderReporte();
+  simRenderTablaProgresion();
   
   if (selectedCharaTab1) onCharacterChangeTab1(selectedCharaTab1.chara);
   if (selectedCharaTab2) onCharacterChangeTab2(selectedCharaTab2.chara);
+  if (selectedCharaSim) simOnCharacterChange(selectedCharaSim.chara);
 }
 
 function aplicarTraducciones() {
@@ -161,9 +211,11 @@ function initWeb(data) {
   charactersData = data;
   const sel1 = document.getElementById('select-chara-1');
   const sel2 = document.getElementById('select-chara-2');
+  const selSim = document.getElementById('sim-select-chara');
 
   sel1.innerHTML = '';
   sel2.innerHTML = '';
+  if (selSim) selSim.innerHTML = '';
 
   data.forEach(c => {
     let opt1 = document.createElement('option');
@@ -173,19 +225,233 @@ function initWeb(data) {
     let opt2 = document.createElement('option');
     opt2.value = c.chara; opt2.text = c.chara;
     sel2.appendChild(opt2);
+
+    if (selSim) {
+      let optSim = document.createElement('option');
+      optSim.value = c.chara; optSim.text = c.chara;
+      selSim.appendChild(optSim);
+    }
   });
+
+  renderDotaCarousel(data);
+  setupCarouselButtons();
 
   if (data.length > 0) {
     onCharacterChangeTab1(data[0].chara);
     onCharacterChangeTab2(data[0].chara);
+    simOnCharacterChange(data[0].chara);
   }
   aplicarTraducciones();
   renderReporte();
 }
 
+function renderDotaCarousel(charactersData) {
+  const carousel = document.getElementById('dotaCarousel');
+  if (!carousel) return;
+  
+  carousel.innerHTML = '';
+
+  let wrapper = carousel.closest('.dota-carousel-wrapper');
+  let dotsContainer = wrapper.querySelector('.dota-pagination-dots');
+  if (!dotsContainer) {
+    dotsContainer = document.createElement('div');
+    dotsContainer.className = 'dota-pagination-dots';
+    wrapper.querySelector('.dota-footer-action').before(dotsContainer);
+  }
+  dotsContainer.innerHTML = '';
+
+  charactersData.forEach((char, index) => {
+    const card = document.createElement('div');
+    card.className = `dota-card ${index === 0 ? 'active' : ''}`;
+    card.dataset.index = index;
+    card.dataset.characterName = char.chara;
+
+    // Asignar dinámicamente el color del elemento desde el Google Sheet
+    if (char.color_elemento) {
+      const rawColor = char.color_elemento.toString().trim();
+      const resolvedColor = COLOR_MAP[rawColor.toLowerCase()] || rawColor;
+      card.style.setProperty('--active-glow-color', resolvedColor);
+    }
+
+    const imgUrl = getDirectImageUrl(char.img_default || char.img);
+    const esperTypeImgUrl = getDirectImageUrl(char.esper_type_img);
+
+    const skill1 = getDirectImageUrl(char.skill_icon_1);
+    const skill2 = getDirectImageUrl(char.skill_icon_2);
+    const skill3 = getDirectImageUrl(char.skill_icon_3);
+    const skill4 = getDirectImageUrl(char.skill_icon_4);
+
+    card.innerHTML = `
+        <div class="dota-card-header">
+            <span class="dota-card-title">${char.chara}</span>
+            <span class="dota-attribute-placeholder" title="${char.esper_type_name || 'Tipo de Esper'}">
+              ${esperTypeImgUrl ? `<img src="${esperTypeImgUrl}" alt="Esper Type" style="width:100%; height:100%; object-fit:contain; border-radius:50%;">` : ''}
+            </span>
+        </div>
+        <div class="dota-card-img-container">
+            <img src="${imgUrl}" alt="${char.chara}" onerror="this.src='https://via.placeholder.com/200x400?text=No+Image'">
+        </div>
+        <div class="dota-skills-container">
+            <div class="dota-skill-slot">${skill1 ? `<img src="${skill1}" alt="Skill 1" style="width:100%; height:100%; object-fit:cover; border-radius:4px;">` : ''}</div>
+            <div class="dota-skill-slot">${skill2 ? `<img src="${skill2}" alt="Skill 2" style="width:100%; height:100%; object-fit:cover; border-radius:4px;">` : ''}</div>
+            <div class="dota-skill-slot">${skill3 ? `<img src="${skill3}" alt="Skill 3" style="width:100%; height:100%; object-fit:cover; border-radius:4px;">` : ''}</div>
+            <div class="dota-skill-slot">${skill4 ? `<img src="${skill4}" alt="Skill 4" style="width:100%; height:100%; object-fit:cover; border-radius:4px;">` : ''}</div>
+        </div>
+    `;
+
+    card.addEventListener('click', () => {
+        const cards = carousel.querySelectorAll('.dota-card');
+        cards.forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        card.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        actualizarDotsActivos(index);
+    });
+
+    carousel.appendChild(card);
+
+    const dot = document.createElement('div');
+    dot.className = `dota-dot ${index === 0 ? 'active' : ''}`;
+    dot.addEventListener('click', () => {
+      const targetCard = carousel.querySelectorAll('.dota-card')[index];
+      if (targetCard) {
+        carousel.querySelectorAll('.dota-card').forEach(c => c.classList.remove('active'));
+        targetCard.classList.add('active');
+        targetCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        actualizarDotsActivos(index);
+      }
+    });
+    dotsContainer.appendChild(dot);
+  });
+
+  setupCarouselInteractivity(carousel);
+}
+
+function actualizarDotsActivos(activeIndex) {
+  const dots = document.querySelectorAll('.dota-dot');
+  dots.forEach((dot, idx) => {
+    if (idx === activeIndex) {
+      dot.classList.add('active');
+    } else {
+      dot.classList.remove('active');
+    }
+  });
+}
+
+function setupCarouselButtons() {
+  const carousel = document.getElementById('dotaCarousel');
+  const btnRandom = document.querySelector('.btn-random');
+  const btnLockIn = document.getElementById('btnLockIn');
+
+  if (btnRandom && carousel) {
+    btnRandom.addEventListener('click', () => {
+      const cards = carousel.querySelectorAll('.dota-card');
+      if (cards.length === 0) return;
+
+      const randomIndex = Math.floor(Math.random() * cards.length);
+      const targetCard = cards[randomIndex];
+
+      cards.forEach(c => c.classList.remove('active'));
+      targetCard.classList.add('active');
+      actualizarDotsActivos(randomIndex);
+      
+      targetCard.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest'
+      });
+    });
+  }
+
+  if (btnLockIn) {
+    btnLockIn.addEventListener('click', () => {
+      const activeCard = document.querySelector('.dota-card.active');
+      if (!activeCard) return;
+
+      const characterName = activeCard.dataset.characterName;
+
+      const tabPersonajeBtn = document.querySelectorAll('.nav-sidebar-btn')[1];
+      if (tabPersonajeBtn) {
+        switchTab('tab-personaje', tabPersonajeBtn);
+      }
+
+      onCharacterChangeTab1(characterName);
+      onCharacterChangeTab2(characterName);
+    });
+  }
+}
+
+function setupCarouselInteractivity(carousel) {
+  let isDown = false;
+  let startX;
+  let scrollLeft;
+
+  function updateActiveCard() {
+    const cards = carousel.querySelectorAll('.dota-card');
+    const carouselRect = carousel.getBoundingClientRect();
+    const carouselCenter = carouselRect.left + carouselRect.width / 2;
+
+    let closestCard = null;
+    let minDistance = Infinity;
+    let closestIndex = 0;
+
+    cards.forEach((card, index) => {
+      const cardRect = card.getBoundingClientRect();
+      const cardCenter = cardRect.left + cardRect.width / 2;
+      const distance = Math.abs(carouselCenter - cardCenter);
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestCard = card;
+        closestIndex = index;
+      }
+    });
+
+    if (closestCard) {
+      cards.forEach(c => c.classList.remove('active'));
+      closestCard.classList.add('active');
+      actualizarDotsActivos(closestIndex);
+    }
+  }
+
+  carousel.addEventListener('mousedown', (e) => {
+    isDown = true;
+    carousel.classList.add('active-dragging');
+    startX = e.pageX - carousel.offsetLeft;
+    scrollLeft = carousel.scrollLeft;
+  });
+
+  carousel.addEventListener('mouseleave', () => {
+    isDown = false;
+    carousel.classList.remove('active-dragging');
+  });
+
+  carousel.addEventListener('mouseup', () => {
+    isDown = false;
+    carousel.classList.remove('active-dragging');
+    updateActiveCard();
+  });
+
+  carousel.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - carousel.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    carousel.scrollLeft = scrollLeft - walk;
+    updateActiveCard();
+  });
+
+  carousel.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const scrollAmount = e.deltaY > 0 ? 280 : -280;
+    carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    
+    setTimeout(updateActiveCard, 150);
+  }, { passive: false });
+}
+
 function switchTab(tabId, btnElement) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-sidebar-btn').forEach(el => el.classList.remove('active'));
   
   document.getElementById(tabId).classList.add('active');
   btnElement.classList.add('active');
@@ -213,6 +479,18 @@ function cambiarPersonajeConFlechaTab2(direccion) {
   
   sel2.selectedIndex = nuevoIndex;
   onCharacterChangeTab2(sel2.options[nuevoIndex].value);
+}
+
+function simCambiarPersonaje(direccion) {
+  const selSim = document.getElementById('sim-select-chara');
+  if (!selSim || selSim.options.length === 0) return;
+
+  let nuevoIndex = selSim.selectedIndex + direccion;
+  if (nuevoIndex < 0) nuevoIndex = selSim.options.length - 1;
+  else if (nuevoIndex >= selSim.options.length) nuevoIndex = 0;
+
+  selSim.selectedIndex = nuevoIndex;
+  simOnCharacterChange(selSim.options[nuevoIndex].value);
 }
 
 function getDirectImageUrl(url) {
@@ -299,8 +577,6 @@ function onCharacterChangeTab2(name) {
   document.getElementById('p2-nivel').value = '0';
   document.getElementById('p2-cartas-qty').value = '0';
   document.getElementById('p2-boletos-qty').value = '0';
-  const simCheckbox = document.getElementById('p2-modo-simulacion');
-  if (simCheckbox) simCheckbox.checked = false;
 
   const isEn = currentLang === 'en';
   document.getElementById('p2-item1-name').innerText = isEn ? (selectedCharaTab2.itemname1en || selectedCharaTab2.itemname1) : selectedCharaTab2.itemname1;
@@ -328,6 +604,104 @@ function onCharacterChangeTab2(name) {
   });
 
   onNivelChangeTab2();
+}
+
+function reiniciarRegalosTab2() {
+  const cartasInput = document.getElementById('p2-cartas-qty');
+  const boletosInput = document.getElementById('p2-boletos-qty');
+  if (cartasInput) cartasInput.value = '0';
+  if (boletosInput) boletosInput.value = '0';
+  recalculateTab2();
+}
+
+function aplicarRegalosTab2() {
+  if (!selectedCharaTab2) return;
+
+  const nivelSelect = document.getElementById('p2-nivel');
+  const afiActualInput = document.getElementById('p2-afiactual');
+  const cartasInput = document.getElementById('p2-cartas-qty');
+  const boletosInput = document.getElementById('p2-boletos-qty');
+
+  const nivelSel = Number(nivelSelect.value) || 0;
+  const rawAfiInput = afiActualInput.value.replace(/,/g, '');
+  const afiIngresada = Number(rawAfiInput) || 0;
+
+  const cartasQty = Number(cartasInput.value) || 0;
+  const boletosQty = Number(boletosInput.value) || 0;
+  const afiExtraRegalos = (cartasQty * 2000) + (boletosQty * 400);
+
+  const afiBaseNivel = ACUMULADO_HASTA_NIVEL[nivelSel] || 0;
+  let afiAcumuladaTotal = afiBaseNivel + afiIngresada + afiExtraRegalos;
+  if (afiAcumuladaTotal > AFINIDAD_MAX) afiAcumuladaTotal = AFINIDAD_MAX;
+
+  const nuevoRes = calcularNivelYRestante(afiAcumuladaTotal);
+
+  nivelSelect.value = nuevoRes.nivel;
+  afiActualInput.value = nuevoRes.sobra.toLocaleString('en-US');
+
+  cartasInput.value = '0';
+  boletosInput.value = '0';
+
+  recalculateTab2();
+}
+
+function simOnCharacterChange(name) {
+  selectedCharaSim = charactersData.find(c => c.chara === name);
+  if (!selectedCharaSim) return;
+
+  const selSim = document.getElementById('sim-select-chara');
+  if (selSim) selSim.value = name;
+
+  document.getElementById('sim-cartas-qty').value = '0';
+  document.getElementById('sim-boletos-qty').value = '0';
+  currentOutfitIndex = 0;
+
+  const avatarUrl = getDirectImageUrl(selectedCharaSim.icon_afi || selectedCharaSim.img);
+  const avatarContainer = document.getElementById('sim-avatar-container');
+  if (avatarUrl) {
+    avatarContainer.innerHTML = `<img src="${avatarUrl}" alt="Avatar" onclick="openModal('${avatarUrl}')">`;
+  } else {
+    avatarContainer.innerHTML = `<span style="font-size:10px;">${translations[currentLang].avatar}</span>`;
+  }
+
+  simActualizarOutfitVisual();
+  simRecalcular();
+}
+
+function simCambiarOutfit(direccion) {
+  currentOutfitIndex += direccion;
+  if (currentOutfitIndex < 0) currentOutfitIndex = 1;
+  else if (currentOutfitIndex > 1) currentOutfitIndex = 0;
+  simActualizarOutfitVisual();
+}
+
+function simActualizarOutfitVisual() {
+  if (!selectedCharaSim) return;
+
+  const viewer = document.getElementById('sim-outfit-viewer-container');
+  const nameDisplay = document.getElementById('sim-display-name');
+  const outfitDisplay = document.getElementById('sim-display-outfit');
+
+  nameDisplay.innerText = selectedCharaSim.chara;
+
+  let imgUrl = '';
+  let outfitNameText = '';
+
+  if (currentOutfitIndex === 0) {
+    imgUrl = getDirectImageUrl(selectedCharaSim.img_default || selectedCharaSim.img);
+    outfitNameText = selectedCharaSim.outfit_name || translations[currentLang].defaultAttire;
+  } else {
+    imgUrl = getDirectImageUrl(selectedCharaSim.outfit_img || selectedCharaSim.img);
+    outfitNameText = translations[currentLang].bondAttire;
+  }
+
+  outfitDisplay.innerText = outfitNameText;
+
+  if (imgUrl) {
+    viewer.innerHTML = `<img src="${imgUrl}" alt="Outfit" onclick="openModal('${imgUrl}')">`;
+  } else {
+    viewer.innerHTML = `<span style="font-size:12px; color:var(--text-muted);">[ No Image ]</span>`;
+  }
 }
 
 function validarRestriccionCitaTab1() {
@@ -374,11 +748,12 @@ function validarRestriccionCitaTab2() {
 
 function onNivelChangeTab2() {
   const nivel = Number(document.getElementById('p2-nivel').value) || 0;
-  const maxPermitido = ACUMULADO_HASTA_NIVEL[nivel + 1] ? (ACUMULADO_HASTA_NIVEL[nivel + 1] - ACUMULADO_HASTA_NIVEL[nivel]) : 0;
+  const reqNivel = REQUISITOS_NIVEL[nivel] || 0;
+  const maxPermitido = reqNivel > 0 ? reqNivel - 1 : 0;
   const rawAfiInput = document.getElementById('p2-afiactual');
   
   let actualVal = Number(rawAfiInput.value.replace(/,/g, '')) || 0;
-  if (actualVal > maxPermitido && maxPermitido > 0) {
+  if (actualVal > maxPermitido && maxPermitido >= 0) {
     actualVal = maxPermitido;
     rawAfiInput.value = actualVal.toLocaleString('en-US');
   }
@@ -395,9 +770,10 @@ function formatAndValidateAffinity(input) {
   }
   let num = parseInt(rawValue, 10);
   const nivel = Number(document.getElementById('p2-nivel').value) || 0;
-  const maxPermitido = ACUMULADO_HASTA_NIVEL[nivel + 1] ? (ACUMULADO_HASTA_NIVEL[nivel + 1] - ACUMULADO_HASTA_NIVEL[nivel]) : 0;
+  const reqNivel = REQUISITOS_NIVEL[nivel] || 0;
+  const maxPermitido = reqNivel > 0 ? reqNivel - 1 : 0;
 
-  if (num > maxPermitido && maxPermitido > 0) {
+  if (num > maxPermitido && maxPermitido >= 0) {
     num = maxPermitido;
   }
   input.value = num.toLocaleString('en-US');
@@ -433,21 +809,13 @@ function guardarEnReporte(idx) {
   const nivelSel = document.getElementById('p2-nivel').value;
   const rawAfiInput = document.getElementById('p2-afiactual').value.replace(/,/g, '');
   const afiIngresada = Number(rawAfiInput) || 0;
+  const cartasQty = Number(document.getElementById('p2-cartas-qty').value) || 0;
+  const boletosQty = Number(document.getElementById('p2-boletos-qty').value) || 0;
+  const afiExtraRegalos = (cartasQty * 2000) + (boletosQty * 400);
 
-  const qtyCartas = Number(document.getElementById('p2-cartas-qty').value) || 0;
-  const qtyBoletos = Number(document.getElementById('p2-boletos-qty').value) || 0;
-  const afiExtraRegalos = (qtyCartas * 2000) + (qtyBoletos * 400);
-  const modoSimulacion = document.getElementById('p2-modo-simulacion').checked;
-
-  let afiAcumulada = 0;
-  if (modoSimulacion) {
-    afiAcumulada = afiExtraRegalos;
-    if (afiAcumulada > AFINIDAD_MAX) afiAcumulada = AFINIDAD_MAX;
-  } else {
-    const afiBaseNivel = ACUMULADO_HASTA_NIVEL[Number(nivelSel)] || 0;
-    afiAcumulada = afiBaseNivel + afiIngresada + afiExtraRegalos;
-    if (afiAcumulada > AFINIDAD_MAX) afiAcumulada = AFINIDAD_MAX;
-  }
+  const afiBaseNivel = ACUMULADO_HASTA_NIVEL[Number(nivelSel)] || 0;
+  let afiAcumulada = afiBaseNivel + afiIngresada + afiExtraRegalos;
+  if (afiAcumulada > AFINIDAD_MAX) afiAcumulada = AFINIDAD_MAX;
 
   const porcentaje = Math.min(100, Math.max(0, (afiAcumulada / AFINIDAD_MAX) * 100));
 
@@ -773,7 +1141,7 @@ function recalculateTab1() {
 
 function calcularNivelYRestante(puntosTotales) {
   if (puntosTotales <= 0) return { nivel: 0, sobra: 0 };
-  if (puntosTotales >= AFINIDAD_MAX) return { nivel: 9, sobra: 0 };
+  if (puntosTotales >= AFINIDAD_MAX) return { nivel: 10, sobra: 0 };
 
   let nivelEncontrado = 0;
   for (let i = 0; i < ACUMULADO_HASTA_NIVEL.length - 1; i++) {
@@ -787,43 +1155,93 @@ function calcularNivelYRestante(puntosTotales) {
   return { nivel: nivelEncontrado, sobra: sobra };
 }
 
+function simRecalcular() {
+  if (!selectedCharaSim) return;
+
+  const qtyCartas = Number(document.getElementById('sim-cartas-qty').value) || 0;
+  const qtyBoletos = Number(document.getElementById('sim-boletos-qty').value) || 0;
+  const afiExtraRegalos = (qtyCartas * 2000) + (qtyBoletos * 400);
+
+  let afiAcumulada = afiExtraRegalos;
+  if (afiAcumulada > AFINIDAD_MAX) afiAcumulada = AFINIDAD_MAX;
+
+  const res = calcularNivelYRestante(afiAcumulada);
+  document.getElementById('sim-out-nivel').innerText = res.nivel;
+  document.getElementById('sim-out-afinidad').innerText = afiAcumulada.toLocaleString('en-US') + ' 💖';
+
+  const porcentaje = Math.min(100, Math.max(0, (afiAcumulada / AFINIDAD_MAX) * 100));
+  const sparkbar = document.getElementById('sim-sparkline-bar');
+  sparkbar.style.width = porcentaje + '%';
+  sparkbar.style.backgroundColor = porcentaje < 30 ? '#ef4444' : (porcentaje < 70 ? '#f59e0b' : '#10b981');
+  document.getElementById('sim-progress-text').innerText = `${afiAcumulada.toLocaleString('en-US')} / ${AFINIDAD_MAX.toLocaleString('en-US')}`;
+
+  simRenderTablaProgresion(res.nivel);
+}
+
+function simRenderTablaProgresion(nivelActualSim = 0) {
+  const tbody = document.getElementById('sim-table-body');
+  if (!tbody) return;
+
+  let html = '';
+  for (let i = 0; i <= 10; i++) {
+    const acumu = ACUMULADO_HASTA_NIVEL[i] || 0;
+    const req = REQUISITOS_NIVEL[i] || 0;
+    const isActive = (i === nivelActualSim) ? 'active-sim-level' : '';
+
+    html += `
+      <tr class="${isActive}">
+        <td>${i}</td>
+        <td>${acumu.toLocaleString('en-US')}</td>
+        <td>${req.toLocaleString('en-US')}</td>
+      </tr>
+    `;
+  }
+  tbody.innerHTML = html;
+}
+
+function simEnviarDatos() {
+  if (!selectedCharaSim) return;
+
+  const qtyCartas = Number(document.getElementById('sim-cartas-qty').value) || 0;
+  const qtyBoletos = Number(document.getElementById('sim-boletos-qty').value) || 0;
+  const afiExtraRegalos = (qtyCartas * 2000) + (qtyBoletos * 400);
+  let afiAcumulada = afiExtraRegalos;
+  if (afiAcumulada > AFINIDAD_MAX) afiAcumulada = AFINIDAD_MAX;
+
+  const res = calcularNivelYRestante(afiAcumulada);
+
+  onCharacterChangeTab2(selectedCharaSim.chara);
+
+  document.getElementById('p2-nivel').value = res.nivel;
+  document.getElementById('p2-afiactual').value = res.sobra.toLocaleString('en-US');
+
+  const tabCalcBtn = document.querySelectorAll('.nav-sidebar-btn')[2];
+  if (tabCalcBtn) {
+    switchTab('tab-calcular', tabCalcBtn);
+  }
+
+  recalculateTab2();
+}
+
 function recalculateTab2() {
   if (!selectedCharaTab2) return;
 
   validarRestriccionCitaTab2();
 
-  const modoSimulacion = document.getElementById('p2-modo-simulacion').checked;
   const nivelSelect = document.getElementById('p2-nivel');
   const afiActualInput = document.getElementById('p2-afiactual');
 
-  nivelSelect.disabled = modoSimulacion;
-  afiActualInput.disabled = modoSimulacion;
+  const nivelSel = Number(nivelSelect.value) || 0;
+  const rawAfiInput = afiActualInput.value.replace(/,/g, '');
+  const afiIngresada = Number(rawAfiInput) || 0;
 
-  const qtyCartas = Number(document.getElementById('p2-cartas-qty').value) || 0;
-  const qtyBoletos = Number(document.getElementById('p2-boletos-qty').value) || 0;
-  const afiExtraRegalos = (qtyCartas * 2000) + (qtyBoletos * 400);
+  const cartasQty = Number(document.getElementById('p2-cartas-qty').value) || 0;
+  const boletosQty = Number(document.getElementById('p2-boletos-qty').value) || 0;
+  const afiExtraRegalos = (cartasQty * 2000) + (boletosQty * 400);
 
-  let afiAcumulada = 0;
-
-  if (modoSimulacion) {
-    afiAcumulada = afiExtraRegalos;
-    if (afiAcumulada > AFINIDAD_MAX) afiAcumulada = AFINIDAD_MAX;
-
-    const resultadoSimulado = calcularNivelYRestante(afiAcumulada);
-    nivelSelect.value = resultadoSimulado.nivel;
-    const maxPermitido = ACUMULADO_HASTA_NIVEL[resultadoSimulado.nivel + 1] ? (ACUMULADO_HASTA_NIVEL[resultadoSimulado.nivel + 1] - ACUMULADO_HASTA_NIVEL[resultadoSimulado.nivel]) : 0;
-    let sobraFinal = resultadoSimulado.sobra;
-    if (sobraFinal > maxPermitido && maxPermitido > 0) sobraFinal = maxPermitido;
-    afiActualInput.value = sobraFinal.toLocaleString('en-US');
-  } else {
-    const nivelSel = Number(nivelSelect.value) || 0;
-    const rawAfiInput = afiActualInput.value.replace(/,/g, '');
-    const afiIngresada = Number(rawAfiInput) || 0;
-
-    const afiBaseNivel = ACUMULADO_HASTA_NIVEL[nivelSel] || 0;
-    afiAcumulada = afiBaseNivel + afiIngresada + afiExtraRegalos;
-    if (afiAcumulada > AFINIDAD_MAX) afiAcumulada = AFINIDAD_MAX;
-  }
+  const afiBaseNivel = ACUMULADO_HASTA_NIVEL[nivelSel] || 0;
+  let afiAcumulada = afiBaseNivel + afiIngresada + afiExtraRegalos;
+  if (afiAcumulada > AFINIDAD_MAX) afiAcumulada = AFINIDAD_MAX;
 
   const porcentaje = Math.min(100, Math.max(0, (afiAcumulada / AFINIDAD_MAX) * 100));
   const sparkbar = document.getElementById('sparkline-bar');
@@ -931,4 +1349,5 @@ function recalculateTab2() {
 function recalculate() {
   recalculateTab1();
   recalculateTab2();
+  simRecalcular();
 }

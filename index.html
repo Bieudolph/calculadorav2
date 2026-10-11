@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>Calculadora de Afinidad v1.2.0</title>
+  <title>Calculadora de Afinidad v1.3.0</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -17,7 +17,7 @@
       <div class="sidebar-top-content">
         <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center;">
           <h1 class="sidebar-title">
-            Calculadora <span class="version-tag">v1.2.0</span>
+            Calculadora <span class="version-tag">v1.3.2</span>
           </h1>
           <button class="sidebar-toggle-btn" id="toggleSidebarBtn" title="Contraer / Expandir barra lateral">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
@@ -58,9 +58,14 @@
       <!-- PESTAÑA 0: INICIO -->
       <div id="tab-inicio" class="tab-content active">
         <div class="dota-home-container">
-          <h2 class="dota-home-title" data-i18n="seleccionarEsper">Seleccionar Esper</h2>
+          <div class="dota-title-group">
+            <h2 class="dota-home-title" data-i18n="seleccionarEsper">Seleccionar Esper</h2>
+            <span class="dota-home-subtitle" data-i18n="subtituloInicio">Usa la rueda del ratón o arrastra para explorar</span>
+          </div>
           <div class="dota-carousel-wrapper">
+            <button class="carousel-nav-arrow carousel-prev-btn" onclick="scrollCarouselManual(-1)" title="Anterior">‹</button>
             <div class="dota-carousel" id="dotaCarousel"></div>
+            <button class="carousel-nav-arrow carousel-next-btn" onclick="scrollCarouselManual(1)" title="Siguiente">›</button>
             <div class="dota-footer-action">
               <button class="btn-random">RANDOM ESPER</button>
               <button class="btn-lockin" id="btnLockIn">LOCK IN</button>
@@ -71,6 +76,14 @@
 
       <!-- PESTAÑA 1: PERSONAJES -->
       <div id="tab-personaje" class="tab-content">
+        <div class="page-header">
+          <h1 class="page-title" data-i18n="headerPersonajesTitle">PERSONAJES</h1>
+          <p class="page-description" data-i18n="headerPersonajesDesc">
+            Consulta la lista de personajes, sus bonos de afinidad desbloqueables y los requisitos de nivel para planificar tus recursos.
+          </p>
+          <hr class="header-divider">
+        </div>
+
         <div class="grid-container">
           <div class="profile-card">
             <div class="character-nav-wrapper">
@@ -120,6 +133,14 @@
 
       <!-- PESTAÑA 2: CALCULAR AFINIDAD -->
       <div id="tab-calcular" class="tab-content">
+        <div class="page-header">
+          <h1 class="page-title" data-i18n="headerCalcularTitle">CALCULAR AFINIDAD</h1>
+          <p class="page-description" data-i18n="headerCalcularDesc">
+            Calcula el tiempo estimado en días y el costo total en Fons según los regalos seleccionados, citas y nubes activadas.
+          </p>
+          <hr class="header-divider">
+        </div>
+
         <div class="calc-layout-master">
           
           <!-- COLUMNA IZQUIERDA: Perfil y Controles -->
@@ -200,12 +221,12 @@
             </div>
           </div>
 
-          <!-- COLUMNA DERECHA: Ítems Arriba + Reporte Abajo -->
+          <!-- COLUMNA DERECHA: Ítems + Reporte -->
           <div class="calc-main-panel">
             <div class="calc-items-grid">
               
               <div class="item-column">
-                <button class="save-btn-top" onclick="guardarEnReporte(1)" title="Añadir al reporte">+</button>
+                <button class="save-btn-top" onclick="guardarEnReporte(1, event)" title="Añadir al reporte">+</button>
                 <div class="item-header" style="font-size:22px; color:#38bdf8;" id="p2-afi1-head">400</div>
                 <div class="item-img-placeholder" id="p2-itemimg-1-container" style="margin-top: 8px;">
                   <span data-i18n="icono">[ Icono ]</span>
@@ -220,16 +241,16 @@
                 
                 <div class="toggle-container" onclick="toggleCardCheckbox('p2-cita1', event)">
                   <span data-i18n="cita">¿Cita?</span>
-                  <input type="checkbox" id="p2-cita1" checked onchange="syncCitas(1, this.checked)" onclick="event.stopPropagation()">
+                  <input type="checkbox" id="p2-cita1" checked onchange="onTab2CheckboxChange()" onclick="event.stopPropagation()">
                 </div>
                 <div class="toggle-container-nube" onclick="toggleCardCheckbox('p2-nube1', event)">
                   <span data-i18n="usarNube">☁ Usar nube del mueble</span>
-                  <input type="checkbox" id="p2-nube1" onchange="syncNubes(1, this.checked)" onclick="event.stopPropagation()">
+                  <input type="checkbox" id="p2-nube1" onchange="onTab2CheckboxChange()" onclick="event.stopPropagation()">
                 </div>
               </div>
 
               <div class="item-column">
-                <button class="save-btn-top" onclick="guardarEnReporte(2)" title="Añadir al reporte">+</button>
+                <button class="save-btn-top" onclick="guardarEnReporte(2, event)" title="Añadir al reporte">+</button>
                 <div class="item-header" style="font-size:22px; color:#38bdf8;" id="p2-afi2-head">200</div>
                 <div class="item-img-placeholder" id="p2-itemimg-2-container" style="margin-top: 8px;">
                   <span data-i18n="icono">[ Icono ]</span>
@@ -244,16 +265,16 @@
                 
                 <div class="toggle-container" onclick="toggleCardCheckbox('p2-cita2', event)">
                   <span data-i18n="cita">¿Cita?</span>
-                  <input type="checkbox" id="p2-cita2" checked onchange="syncCitas(2, this.checked)" onclick="event.stopPropagation()">
+                  <input type="checkbox" id="p2-cita2" checked onchange="onTab2CheckboxChange()" onclick="event.stopPropagation()">
                 </div>
                 <div class="toggle-container-nube" onclick="toggleCardCheckbox('p2-nube2', event)">
                   <span data-i18n="usarNube">☁️ Usar nube del mueble</span>
-                  <input type="checkbox" id="p2-nube2" onchange="syncNubes(2, this.checked)" onclick="event.stopPropagation()">
+                  <input type="checkbox" id="p2-nube2" onchange="onTab2CheckboxChange()" onclick="event.stopPropagation()">
                 </div>
               </div>
 
               <div class="item-column">
-                <button class="save-btn-top" onclick="guardarEnReporte(3)" title="Añadir al reporte">+</button>
+                <button class="save-btn-top" onclick="guardarEnReporte(3, event)" title="Añadir al reporte">+</button>
                 <div class="item-header" style="font-size:22px; color:#38bdf8;" id="p2-afi3-head">100</div>
                 <div class="item-img-placeholder" id="p2-itemimg-3-container" style="margin-top: 8px;">
                   <span data-i18n="icono">[ Icono ]</span>
@@ -268,11 +289,11 @@
                 
                 <div class="toggle-container" onclick="toggleCardCheckbox('p2-cita3', event)">
                   <span data-i18n="cita">¿Cita?</span>
-                  <input type="checkbox" id="p2-cita3" checked onchange="syncCitas(3, this.checked)" onclick="event.stopPropagation()">
+                  <input type="checkbox" id="p2-cita3" checked onchange="onTab2CheckboxChange()" onclick="event.stopPropagation()">
                 </div>
                 <div class="toggle-container-nube" onclick="toggleCardCheckbox('p2-nube3', event)">
                   <span data-i18n="usarNube">☁️ Usar nube del mueble</span>
-                  <input type="checkbox" id="p2-nube3" onchange="syncNubes(3, this.checked)" onclick="event.stopPropagation()">
+                  <input type="checkbox" id="p2-nube3" onchange="onTab2CheckboxChange()" onclick="event.stopPropagation()">
                 </div>
               </div>
 
@@ -297,15 +318,12 @@
 
       <!-- PESTAÑA 3: SIMULADOR -->
       <div id="tab-simulador" class="tab-content">
-        <div class="sim-top-bar">
-          <div class="avatar-container sim-avatar-sm" id="sim-avatar-container">
-            <span style="font-size:10px;" data-i18n="avatar">[ Avatar ]</span>
-          </div>
-          <div class="character-nav-wrapper" style="max-width: 320px;">
-            <button type="button" class="nav-arrow-btn" onclick="simCambiarPersonaje(-1)">&lt;</button>
-            <select id="sim-select-chara" onchange="simOnCharacterChange(this.value)"></select>
-            <button type="button" class="nav-arrow-btn" onclick="simCambiarPersonaje(1)">&gt;</button>
-          </div>
+        <div class="page-header">
+          <h1 class="page-title" data-i18n="headerSimuladorTitle">SIMULADOR</h1>
+          <p class="page-description" data-i18n="headerSimuladorDesc">
+            Simula la progresión de nivel de cada personaje, ajusta la cantidad de regalos entregados y envía los datos directamente al calculador.
+          </p>
+          <hr class="header-divider">
         </div>
 
         <div class="sim-layout-container">
@@ -314,12 +332,14 @@
               <span style="font-size:12px; color:var(--text-muted);">[ Outfit Viewer ]</span>
             </div>
             <div class="sim-outfit-controls">
-              <button type="button" class="nav-arrow-btn" onclick="simCambiarOutfit(-1)">&lt;</button>
+              <button type="button" class="nav-arrow-btn" onclick="simCambiarPersonaje(-1)">&lt;</button>
               <div class="sim-character-title-box">
-                <span class="sim-chara-name-lg" id="sim-display-name">Zankou</span>
+                <div class="sim-select-wrapper">
+                  <select id="sim-select-chara" class="sim-chara-select-clean" onchange="simOnCharacterChange(this.value)"></select>
+                </div>
                 <span class="sim-outfit-name-sub" id="sim-display-outfit">Default Attire</span>
               </div>
-              <button type="button" class="nav-arrow-btn" onclick="simCambiarOutfit(1)">&gt;</button>
+              <button type="button" class="nav-arrow-btn" onclick="simCambiarPersonaje(1)">&gt;</button>
             </div>
           </div>
 
@@ -366,6 +386,44 @@
                 </div>
                 <div class="sim-gift-input-wrap" onclick="event.stopPropagation()">
                   <input type="number" id="sim-boletos-qty" value="0" min="0" oninput="simRecalcular()">
+                </div>
+              </div>
+            </div>
+
+            <!-- REGALOS ESPECÍFICOS DEL PERSONAJE -->
+            <div class="sim-gifts-box" style="margin-top: 15px;">
+              <div class="section-title">REGALOS</div>
+              
+              <div class="sim-gift-card-lg" onclick="openModal(document.getElementById('sim-gift-img-1').src)">
+                <img id="sim-gift-img-1" src="" alt="Item 1">
+                <div class="sim-gift-info">
+                  <span class="sim-gift-name" id="sim-gift-name-1">Item 1</span>
+                  <span class="sim-gift-val" id="sim-gift-val-1">+400 <img src="https://lh3.googleusercontent.com/d/16Yzy8DsFN4jdaacXLffYAI3MnZAxmmmT" class="affinity-icon" alt="Affinity"></span>
+                </div>
+                <div class="sim-gift-input-wrap" onclick="event.stopPropagation()">
+                  <input type="number" id="sim-gift-qty-1" value="0" min="0" oninput="simRecalcular()">
+                </div>
+              </div>
+
+              <div class="sim-gift-card-lg" onclick="openModal(document.getElementById('sim-gift-img-2').src)">
+                <img id="sim-gift-img-2" src="" alt="Item 2">
+                <div class="sim-gift-info">
+                  <span class="sim-gift-name" id="sim-gift-name-2">Item 2</span>
+                  <span class="sim-gift-val" id="sim-gift-val-2">+200 <img src="https://lh3.googleusercontent.com/d/16Yzy8DsFN4jdaacXLffYAI3MnZAxmmmT" class="affinity-icon" alt="Affinity"></span>
+                </div>
+                <div class="sim-gift-input-wrap" onclick="event.stopPropagation()">
+                  <input type="number" id="sim-gift-qty-2" value="0" min="0" oninput="simRecalcular()">
+                </div>
+              </div>
+
+              <div class="sim-gift-card-lg" onclick="openModal(document.getElementById('sim-gift-img-3').src)">
+                <img id="sim-gift-img-3" src="" alt="Item 3">
+                <div class="sim-gift-info">
+                  <span class="sim-gift-name" id="sim-gift-name-3">Item 3</span>
+                  <span class="sim-gift-val" id="sim-gift-val-3">+100 <img src="https://lh3.googleusercontent.com/d/16Yzy8DsFN4jdaacXLffYAI3MnZAxmmmT" class="affinity-icon" alt="Affinity"></span>
+                </div>
+                <div class="sim-gift-input-wrap" onclick="event.stopPropagation()">
+                  <input type="number" id="sim-gift-qty-3" value="0" min="0" oninput="simRecalcular()">
                 </div>
               </div>
             </div>

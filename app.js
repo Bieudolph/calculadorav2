@@ -17,7 +17,7 @@ const ACUMULADO_HASTA_NIVEL = [0, 100, 600, 1600, 3600, 7100, 12100, 19100, 2810
 const AFINIDAD_MAX = 56100;
 const AFINIDAD_ITEMS_MAX = 56000;
 
-// Mapa de colores predefinidos actualizados con Gris y otros tonos
+// Mapa de colores predefinidos actualizados y otros tonos
 const COLOR_MAP = {
   'rojo': '#ef4444',
   'azul': '#3b82f6',
@@ -39,7 +39,14 @@ const translations = {
     tabPersonajes: "Personajes",
     tabCalcular: "Calcular Afinidad",
     tabSimulador: "Simulador",
+    headerPersonajesTitle: "PERSONAJES",
+    headerPersonajesDesc: "Consulta la lista de personajes, sus bonos de afinidad desbloqueables y los requisitos de nivel para planificar tus recursos.",
+    headerCalcularTitle: "CALCULAR AFINIDAD",
+    headerCalcularDesc: "Calcula el tiempo estimado en días y el costo total en Fons según los regalos seleccionados, citas y nubes activadas.",
+    headerSimuladorTitle: "SIMULADOR",
+    headerSimuladorDesc: "Simula la progresión de nivel de cada personaje, ajusta la cantidad de regalos entregados y envía los datos directamente al calculador.",
     seleccionarEsper: "Seleccionar Esper",
+    subtituloInicio: "Usa la rueda del ratón o arrastra para explorar",
     bonoAfinidad: "Bono de afinidad nivel 10",
     outfit: "Outfit",
     itemLabel: "Item",
@@ -59,7 +66,7 @@ const translations = {
     usarNube: "Usar nube del mueble",
     sinCitaMsg: "Este personaje no cuenta con sistema de citas",
     reporteTitulo: "Reporte de Recursos Guardados",
-    limpiarReporte: "Limpiar todo",
+    limpiarReporte: "Limpiar",
     exportarPng: "Descargar",
     costoTotalLv10: "COSTO TOTAL A NIVEL 10",
     bondLevelText: "NIVEL DE AFINIDAD",
@@ -77,14 +84,21 @@ const translations = {
     defaultAttire: "Default Attire",
     bondAttire: "Bond Attire",
     tabla: "ESTADÍSTICAS",
-    aplicarRegalos: "✓ Aplicar regalos al perfil"
+    aplicarRegalos: "Aplicar regalos al perfil"
   },
   en: {
     tabInicio: "Home",
     tabPersonajes: "Characters",
     tabCalcular: "Calculate Affection",
     tabSimulador: "Simulator",
+    headerPersonajesTitle: "CHARACTERS",
+    headerPersonajesDesc: "Browse character details, unlockable affection bonuses, and level requirements to plan your resources.",
+    headerCalcularTitle: "CALCULATE AFFECTION",
+    headerCalcularDesc: "Calculate estimated days and total Fons cost based on selected gifts, dates, and Fluffy Cottons.",
+    headerSimuladorTitle: "SIMULATOR",
+    headerSimuladorDesc: "Simulate level progression, adjust gift amounts, and transfer calculation data directly.",
     seleccionarEsper: "Select Esper",
+    subtituloInicio: "Use mouse wheel or drag to explore",
     bonoAfinidad: "Level 10 Affection Bonus",
     outfit: "Outfit",
     itemLabel: "Item",
@@ -122,7 +136,7 @@ const translations = {
     defaultAttire: "Default Attire",
     bondAttire: "Bond Attire",
     tabla: "STATISTICS",
-    aplicarRegalos: "✓ Apply gifts to profile"
+    aplicarRegalos: "Apply gifts to profile"
   }
 };
 
@@ -213,18 +227,22 @@ function initWeb(data) {
   const sel2 = document.getElementById('select-chara-2');
   const selSim = document.getElementById('sim-select-chara');
 
-  sel1.innerHTML = '';
-  sel2.innerHTML = '';
+  if (sel1) sel1.innerHTML = '';
+  if (sel2) sel2.innerHTML = '';
   if (selSim) selSim.innerHTML = '';
 
   data.forEach(c => {
-    let opt1 = document.createElement('option');
-    opt1.value = c.chara; opt1.text = c.chara;
-    sel1.appendChild(opt1);
+    if (sel1) {
+      let opt1 = document.createElement('option');
+      opt1.value = c.chara; opt1.text = c.chara;
+      sel1.appendChild(opt1);
+    }
 
-    let opt2 = document.createElement('option');
-    opt2.value = c.chara; opt2.text = c.chara;
-    sel2.appendChild(opt2);
+    if (sel2) {
+      let opt2 = document.createElement('option');
+      opt2.value = c.chara; opt2.text = c.chara;
+      sel2.appendChild(opt2);
+    }
 
     if (selSim) {
       let optSim = document.createElement('option');
@@ -252,11 +270,18 @@ function renderDotaCarousel(charactersData) {
   carousel.innerHTML = '';
 
   let wrapper = carousel.closest('.dota-carousel-wrapper');
+  if (!wrapper) return;
+  
   let dotsContainer = wrapper.querySelector('.dota-pagination-dots');
   if (!dotsContainer) {
     dotsContainer = document.createElement('div');
     dotsContainer.className = 'dota-pagination-dots';
-    wrapper.querySelector('.dota-footer-action').before(dotsContainer);
+    const footerAction = wrapper.querySelector('.dota-footer-action');
+    if (footerAction) {
+      footerAction.before(dotsContainer);
+    } else {
+      wrapper.appendChild(dotsContainer);
+    }
   }
   dotsContainer.innerHTML = '';
 
@@ -265,8 +290,9 @@ function renderDotaCarousel(charactersData) {
     card.className = `dota-card ${index === 0 ? 'active' : ''}`;
     card.dataset.index = index;
     card.dataset.characterName = char.chara;
+    
+    card.style.animationDelay = `${index * 0.05}s`;
 
-    // Asignar dinámicamente el color del elemento desde el Google Sheet
     if (char.color_elemento) {
       const rawColor = char.color_elemento.toString().trim();
       const resolvedColor = COLOR_MAP[rawColor.toLowerCase()] || rawColor;
@@ -285,17 +311,17 @@ function renderDotaCarousel(charactersData) {
         <div class="dota-card-header">
             <span class="dota-card-title">${char.chara}</span>
             <span class="dota-attribute-placeholder" title="${char.esper_type_name || 'Tipo de Esper'}">
-              ${esperTypeImgUrl ? `<img src="${esperTypeImgUrl}" alt="Esper Type" style="width:100%; height:100%; object-fit:contain; border-radius:50%;">` : ''}
+              ${esperTypeImgUrl ? `<img src="${esperTypeImgUrl}" alt="Esper Type" draggable="false" style="width:100%; height:100%; object-fit:contain; border-radius:50%;">` : ''}
             </span>
         </div>
         <div class="dota-card-img-container">
-            <img src="${imgUrl}" alt="${char.chara}" onerror="this.src='https://via.placeholder.com/200x400?text=No+Image'">
+            <img src="${imgUrl}" alt="${char.chara}" draggable="false" onerror="this.src='https://via.placeholder.com/200x400?text=No+Image'">
         </div>
         <div class="dota-skills-container">
-            <div class="dota-skill-slot">${skill1 ? `<img src="${skill1}" alt="Skill 1" style="width:100%; height:100%; object-fit:cover; border-radius:4px;">` : ''}</div>
-            <div class="dota-skill-slot">${skill2 ? `<img src="${skill2}" alt="Skill 2" style="width:100%; height:100%; object-fit:cover; border-radius:4px;">` : ''}</div>
-            <div class="dota-skill-slot">${skill3 ? `<img src="${skill3}" alt="Skill 3" style="width:100%; height:100%; object-fit:cover; border-radius:4px;">` : ''}</div>
-            <div class="dota-skill-slot">${skill4 ? `<img src="${skill4}" alt="Skill 4" style="width:100%; height:100%; object-fit:cover; border-radius:4px;">` : ''}</div>
+            <div class="dota-skill-slot">${skill1 ? `<img src="${skill1}" alt="Skill 1" draggable="false" style="width:100%; height:100%; object-fit:cover; border-radius:4px;">` : ''}</div>
+            <div class="dota-skill-slot">${skill2 ? `<img src="${skill2}" alt="Skill 2" draggable="false" style="width:100%; height:100%; object-fit:cover; border-radius:4px;">` : ''}</div>
+            <div class="dota-skill-slot">${skill3 ? `<img src="${skill3}" alt="Skill 3" draggable="false" style="width:100%; height:100%; object-fit:cover; border-radius:4px;">` : ''}</div>
+            <div class="dota-skill-slot">${skill4 ? `<img src="${skill4}" alt="Skill 4" draggable="false" style="width:100%; height:100%; object-fit:cover; border-radius:4px;">` : ''}</div>
         </div>
     `;
 
@@ -335,6 +361,44 @@ function actualizarDotsActivos(activeIndex) {
       dot.classList.remove('active');
     }
   });
+}
+
+function scrollCarouselManual(direccion) {
+  const carousel = document.getElementById('dotaCarousel');
+  if (!carousel) return;
+  const scrollAmount = direccion * 280;
+  carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+  setTimeout(updateActiveCardFromScroll, 200);
+}
+
+function updateActiveCardFromScroll() {
+  const carousel = document.getElementById('dotaCarousel');
+  if (!carousel) return;
+  const cards = carousel.querySelectorAll('.dota-card');
+  const carouselRect = carousel.getBoundingClientRect();
+  const carouselCenter = carouselRect.left + carouselRect.width / 2;
+
+  let closestCard = null;
+  let minDistance = Infinity;
+  let closestIndex = 0;
+
+  cards.forEach((card, index) => {
+    const cardRect = card.getBoundingClientRect();
+    const cardCenter = cardRect.left + cardRect.width / 2;
+    const distance = Math.abs(carouselCenter - cardCenter);
+
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestCard = card;
+      closestIndex = index;
+    }
+  });
+
+  if (closestCard) {
+    cards.forEach(c => c.classList.remove('active'));
+    closestCard.classList.add('active');
+    actualizarDotsActivos(closestIndex);
+  }
 }
 
 function setupCarouselButtons() {
@@ -384,6 +448,11 @@ function setupCarouselInteractivity(carousel) {
   let isDown = false;
   let startX;
   let scrollLeft;
+  
+  let velocity = 0;
+  let lastX = 0;
+  let lastTime = Date.now();
+  let momentumID = null;
 
   function updateActiveCard() {
     const cards = carousel.querySelectorAll('.dota-card');
@@ -413,22 +482,46 @@ function setupCarouselInteractivity(carousel) {
     }
   }
 
+  function applyMomentum() {
+    if (Math.abs(velocity) > 0.5) {
+      carousel.scrollLeft -= velocity * 12;
+      velocity *= 0.92;
+      updateActiveCard();
+      momentumID = requestAnimationFrame(applyMomentum);
+    } else {
+      updateActiveCard();
+      const activeCard = carousel.querySelector('.dota-card.active');
+      if (activeCard) {
+        activeCard.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+      }
+    }
+  }
+
   carousel.addEventListener('mousedown', (e) => {
     isDown = true;
     carousel.classList.add('active-dragging');
     startX = e.pageX - carousel.offsetLeft;
     scrollLeft = carousel.scrollLeft;
+
+    lastX = e.pageX;
+    lastTime = Date.now();
+    velocity = 0;
+
+    cancelAnimationFrame(momentumID);
   });
 
   carousel.addEventListener('mouseleave', () => {
+    if (!isDown) return;
     isDown = false;
     carousel.classList.remove('active-dragging');
+    applyMomentum();
   });
 
   carousel.addEventListener('mouseup', () => {
+    if (!isDown) return;
     isDown = false;
     carousel.classList.remove('active-dragging');
-    updateActiveCard();
+    applyMomentum();
   });
 
   carousel.addEventListener('mousemove', (e) => {
@@ -437,11 +530,22 @@ function setupCarouselInteractivity(carousel) {
     const x = e.pageX - carousel.offsetLeft;
     const walk = (x - startX) * 1.5;
     carousel.scrollLeft = scrollLeft - walk;
+
+    const now = Date.now();
+    const dt = now - lastTime;
+    if (dt > 0) {
+      const dx = e.pageX - lastX;
+      velocity = dx / dt;
+    }
+    lastX = e.pageX;
+    lastTime = now;
+
     updateActiveCard();
   });
 
   carousel.addEventListener('wheel', (e) => {
     e.preventDefault();
+    cancelAnimationFrame(momentumID);
     const scrollAmount = e.deltaY > 0 ? 280 : -280;
     carousel.scrollBy({ left: scrollAmount, behavior: 'smooth' });
     
@@ -453,8 +557,9 @@ function switchTab(tabId, btnElement) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-sidebar-btn').forEach(el => el.classList.remove('active'));
   
-  document.getElementById(tabId).classList.add('active');
-  btnElement.classList.add('active');
+  const targetTab = document.getElementById(tabId);
+  if (targetTab) targetTab.classList.add('active');
+  if (btnElement) btnElement.classList.add('active');
 }
 
 function cambiarPersonajeConFlechaTab1(direccion) {
@@ -506,16 +611,19 @@ function getDirectImageUrl(url) {
 
 function openModal(imgUrl) {
   if (!imgUrl) return;
-  document.getElementById('modal-img').src = imgUrl;
-  document.getElementById('image-modal').style.display = 'flex';
+  const modalImg = document.getElementById('modal-img');
+  const modal = document.getElementById('image-modal');
+  if (modalImg) modalImg.src = imgUrl;
+  if (modal) modal.style.display = 'flex';
 }
 
 function closeModal() {
-  document.getElementById('image-modal').style.display = 'none';
+  const modal = document.getElementById('image-modal');
+  if (modal) modal.style.display = 'none';
 }
 
 function toggleCardCheckbox(checkboxId, event) {
-  event.stopPropagation();
+  if (event) event.stopPropagation();
   const checkbox = document.getElementById(checkboxId);
   if (checkbox && !checkbox.disabled) {
     checkbox.checked = !checkbox.checked;
@@ -527,29 +635,41 @@ function onCharacterChangeTab1(name) {
   selectedCharaTab1 = charactersData.find(c => c.chara === name);
   if (!selectedCharaTab1) return;
   
-  document.getElementById('select-chara-1').value = name;
-  document.getElementById('p1-bonus').innerText = selectedCharaTab1.bonus;
-  document.getElementById('p1-outfit-name').innerText = selectedCharaTab1.outfit_name || translations[currentLang].outfit;
+  const sel1 = document.getElementById('select-chara-1');
+  const p1Bonus = document.getElementById('p1-bonus');
+  const p1OutfitName = document.getElementById('p1-outfit-name');
+  
+  if (sel1) sel1.value = name;
+  if (p1Bonus) p1Bonus.innerText = selectedCharaTab1.bonus;
+  if (p1OutfitName) p1OutfitName.innerText = selectedCharaTab1.outfit_name || translations[currentLang].outfit;
   
   const isEn = currentLang === 'en';
-  document.getElementById('p1-item1-name').innerText = isEn ? (selectedCharaTab1.itemname1en || selectedCharaTab1.itemname1) : selectedCharaTab1.itemname1;
-  document.getElementById('p1-item2-name').innerText = isEn ? (selectedCharaTab1.itemname2en || selectedCharaTab1.itemname2) : selectedCharaTab1.itemname2;
-  document.getElementById('p1-item3-name').innerText = isEn ? (selectedCharaTab1.itemname3en || selectedCharaTab1.itemname3) : selectedCharaTab1.itemname3;
+  const item1Name = document.getElementById('p1-item1-name');
+  const item2Name = document.getElementById('p1-item2-name');
+  const item3Name = document.getElementById('p1-item3-name');
+
+  if (item1Name) item1Name.innerText = isEn ? (selectedCharaTab1.itemname1en || selectedCharaTab1.itemname1) : selectedCharaTab1.itemname1;
+  if (item2Name) item2Name.innerText = isEn ? (selectedCharaTab1.itemname2en || selectedCharaTab1.itemname2) : selectedCharaTab1.itemname2;
+  if (item3Name) item3Name.innerText = isEn ? (selectedCharaTab1.itemname3en || selectedCharaTab1.itemname3) : selectedCharaTab1.itemname3;
 
   const avatarUrl = getDirectImageUrl(selectedCharaTab1.img);
   const avatarContainer = document.getElementById('p1-avatar-container');
-  if (avatarUrl) {
-    avatarContainer.innerHTML = `<img src="${avatarUrl}" alt="Avatar" onclick="openModal('${avatarUrl}')">`;
-  } else {
-    avatarContainer.innerHTML = `<span style="font-size:12px;">${translations[currentLang].avatar}</span>`;
+  if (avatarContainer) {
+    if (avatarUrl) {
+      avatarContainer.innerHTML = `<img src="${avatarUrl}" alt="Avatar" onclick="openModal('${avatarUrl}')">`;
+    } else {
+      avatarContainer.innerHTML = `<span style="font-size:12px;">${translations[currentLang].avatar}</span>`;
+    }
   }
 
   const outfitUrl = getDirectImageUrl(selectedCharaTab1.outfit_img);
   const outfitContainer = document.getElementById('p1-outfit-container');
-  if (outfitUrl) {
-    outfitContainer.innerHTML = `<img src="${outfitUrl}" alt="Outfit" onclick="openModal('${outfitUrl}')">`;
-  } else {
-    outfitContainer.innerHTML = `<span style="font-size:12px;">${translations[currentLang].outfit}</span>`;
+  if (outfitContainer) {
+    if (outfitUrl) {
+      outfitContainer.innerHTML = `<img src="${outfitUrl}" alt="Outfit" onclick="openModal('${outfitUrl}')">`;
+    } else {
+      outfitContainer.innerHTML = `<span style="font-size:12px;">${translations[currentLang].outfit}</span>`;
+    }
   }
 
   [1, 2, 3].forEach(idx => {
@@ -572,23 +692,35 @@ function onCharacterChangeTab2(name) {
   selectedCharaTab2 = charactersData.find(c => c.chara === name);
   if (!selectedCharaTab2) return;
   
-  document.getElementById('select-chara-2').value = name;
-  document.getElementById('p2-afiactual').value = '0';
-  document.getElementById('p2-nivel').value = '0';
-  document.getElementById('p2-cartas-qty').value = '0';
-  document.getElementById('p2-boletos-qty').value = '0';
+  const sel2 = document.getElementById('select-chara-2');
+  const afiactual = document.getElementById('p2-afiactual');
+  const nivel = document.getElementById('p2-nivel');
+  const cartasQty = document.getElementById('p2-cartas-qty');
+  const boletosQty = document.getElementById('p2-boletos-qty');
+
+  if (sel2) sel2.value = name;
+  if (afiactual) afiactual.value = '0';
+  if (nivel) nivel.value = '0';
+  if (cartasQty) cartasQty.value = '0';
+  if (boletosQty) boletosQty.value = '0';
 
   const isEn = currentLang === 'en';
-  document.getElementById('p2-item1-name').innerText = isEn ? (selectedCharaTab2.itemname1en || selectedCharaTab2.itemname1) : selectedCharaTab2.itemname1;
-  document.getElementById('p2-item2-name').innerText = isEn ? (selectedCharaTab2.itemname2en || selectedCharaTab2.itemname2) : selectedCharaTab2.itemname2;
-  document.getElementById('p2-item3-name').innerText = isEn ? (selectedCharaTab2.itemname3en || selectedCharaTab2.itemname3) : selectedCharaTab2.itemname3;
+  const item1Name = document.getElementById('p2-item1-name');
+  const item2Name = document.getElementById('p2-item2-name');
+  const item3Name = document.getElementById('p2-item3-name');
+
+  if (item1Name) item1Name.innerText = isEn ? (selectedCharaTab2.itemname1en || selectedCharaTab2.itemname1) : selectedCharaTab2.itemname1;
+  if (item2Name) item2Name.innerText = isEn ? (selectedCharaTab2.itemname2en || selectedCharaTab2.itemname2) : selectedCharaTab2.itemname2;
+  if (item3Name) item3Name.innerText = isEn ? (selectedCharaTab2.itemname3en || selectedCharaTab2.itemname3) : selectedCharaTab2.itemname3;
 
   const iconAfiUrl = getDirectImageUrl(selectedCharaTab2.icon_afi || selectedCharaTab2.img);
   const avatarContainer2 = document.getElementById('p2-avatar-container');
-  if (iconAfiUrl) {
-    avatarContainer2.innerHTML = `<img src="${iconAfiUrl}" alt="Avatar" onclick="openModal('${iconAfiUrl}')">`;
-  } else {
-    avatarContainer2.innerHTML = `<span style="font-size:12px;">${translations[currentLang].avatar}</span>`;
+  if (avatarContainer2) {
+    if (iconAfiUrl) {
+      avatarContainer2.innerHTML = `<img src="${iconAfiUrl}" alt="Avatar" onclick="openModal('${iconAfiUrl}')">`;
+    } else {
+      avatarContainer2.innerHTML = `<span style="font-size:12px;">${translations[currentLang].avatar}</span>`;
+    }
   }
 
   [1, 2, 3].forEach(idx => {
@@ -622,6 +754,8 @@ function aplicarRegalosTab2() {
   const cartasInput = document.getElementById('p2-cartas-qty');
   const boletosInput = document.getElementById('p2-boletos-qty');
 
+  if (!nivelSelect || !afiActualInput || !cartasInput || !boletosInput) return;
+
   const nivelSel = Number(nivelSelect.value) || 0;
   const rawAfiInput = afiActualInput.value.replace(/,/g, '');
   const afiIngresada = Number(rawAfiInput) || 0;
@@ -652,27 +786,31 @@ function simOnCharacterChange(name) {
   const selSim = document.getElementById('sim-select-chara');
   if (selSim) selSim.value = name;
 
-  document.getElementById('sim-cartas-qty').value = '0';
-  document.getElementById('sim-boletos-qty').value = '0';
+  const cartasQty = document.getElementById('sim-cartas-qty');
+  const boletosQty = document.getElementById('sim-boletos-qty');
+  if (cartasQty) cartasQty.value = '0';
+  if (boletosQty) boletosQty.value = '0';
+  
+  [1, 2, 3].forEach(idx => {
+    const giftInput = document.getElementById(`sim-gift-qty-${idx}`);
+    if (giftInput) giftInput.value = '0';
+  });
+
   currentOutfitIndex = 0;
 
-  const avatarUrl = getDirectImageUrl(selectedCharaSim.icon_afi || selectedCharaSim.img);
+  const avatarUrl = getDirectImageUrl(selectedCharaSim.img_default || selectedCharaSim.img);
   const avatarContainer = document.getElementById('sim-avatar-container');
-  if (avatarUrl) {
-    avatarContainer.innerHTML = `<img src="${avatarUrl}" alt="Avatar" onclick="openModal('${avatarUrl}')">`;
-  } else {
-    avatarContainer.innerHTML = `<span style="font-size:10px;">${translations[currentLang].avatar}</span>`;
+  if (avatarContainer) {
+    if (avatarUrl) {
+      avatarContainer.innerHTML = `<img src="${avatarUrl}" alt="Avatar" onclick="openModal('${avatarUrl}')">`;
+    } else {
+      avatarContainer.innerHTML = `<span style="font-size:10px;">${translations[currentLang].avatar}</span>`;
+    }
   }
 
   simActualizarOutfitVisual();
+  simActualizarRegalosPersonaje();
   simRecalcular();
-}
-
-function simCambiarOutfit(direccion) {
-  currentOutfitIndex += direccion;
-  if (currentOutfitIndex < 0) currentOutfitIndex = 1;
-  else if (currentOutfitIndex > 1) currentOutfitIndex = 0;
-  simActualizarOutfitVisual();
 }
 
 function simActualizarOutfitVisual() {
@@ -682,26 +820,48 @@ function simActualizarOutfitVisual() {
   const nameDisplay = document.getElementById('sim-display-name');
   const outfitDisplay = document.getElementById('sim-display-outfit');
 
-  nameDisplay.innerText = selectedCharaSim.chara;
+  if (nameDisplay) nameDisplay.innerText = selectedCharaSim.chara;
 
-  let imgUrl = '';
-  let outfitNameText = '';
+  let imgUrl = getDirectImageUrl(selectedCharaSim.img_default || selectedCharaSim.img);
+  let outfitNameText = selectedCharaSim.outfit_name || translations[currentLang].defaultAttire;
 
-  if (currentOutfitIndex === 0) {
-    imgUrl = getDirectImageUrl(selectedCharaSim.img_default || selectedCharaSim.img);
-    outfitNameText = selectedCharaSim.outfit_name || translations[currentLang].defaultAttire;
-  } else {
-    imgUrl = getDirectImageUrl(selectedCharaSim.outfit_img || selectedCharaSim.img);
-    outfitNameText = translations[currentLang].bondAttire;
+  if (outfitDisplay) outfitDisplay.innerText = outfitNameText;
+
+  if (viewer) {
+    if (imgUrl) {
+      viewer.innerHTML = `<img src="${imgUrl}" alt="Outfit" onclick="openModal('${imgUrl}')">`;
+    } else {
+      viewer.innerHTML = `<span style="font-size:12px; color:var(--text-muted);">[ No Image ]</span>`;
+    }
   }
+}
 
-  outfitDisplay.innerText = outfitNameText;
+function simActualizarRegalosPersonaje() {
+  if (!selectedCharaSim) return;
+  const isEn = currentLang === 'en';
 
-  if (imgUrl) {
-    viewer.innerHTML = `<img src="${imgUrl}" alt="Outfit" onclick="openModal('${imgUrl}')">`;
-  } else {
-    viewer.innerHTML = `<span style="font-size:12px; color:var(--text-muted);">[ No Image ]</span>`;
-  }
+  [1, 2, 3].forEach(idx => {
+    const nameEl = document.getElementById(`sim-gift-name-${idx}`);
+    const valEl = document.getElementById(`sim-gift-val-${idx}`);
+    const imgEl = document.getElementById(`sim-gift-img-${idx}`);
+
+    if (nameEl) {
+      const itemName = isEn ? (selectedCharaSim[`itemname${idx}en`] || selectedCharaSim[`itemname${idx}`]) : selectedCharaSim[`itemname${idx}`];
+      nameEl.innerText = itemName || `Item ${idx}`;
+    }
+
+    if (valEl) {
+      const afiVal = selectedCharaSim[`affinity${idx}`] || 0;
+      valEl.innerHTML = `+${afiVal} <img src="${AFFINITY_ICON_URL}" class="affinity-icon" alt="Affinity">`;
+    }
+
+    if (imgEl) {
+      const itemImgUrl = getDirectImageUrl(selectedCharaSim[`itemimg_${idx}`]);
+      if (itemImgUrl) {
+        imgEl.src = itemImgUrl;
+      }
+    }
+  });
 }
 
 function validarRestriccionCitaTab1() {
@@ -724,7 +884,8 @@ function validarRestriccionCitaTab1() {
 function validarRestriccionCitaTab2() {
   if (!selectedCharaTab2) return;
 
-  const nivelSel = Number(document.getElementById('p2-nivel').value) || 0;
+  const nivelSelect = document.getElementById('p2-nivel');
+  const nivelSel = nivelSelect ? Number(nivelSelect.value) || 0 : 0;
   const nivelCitaRaw = selectedCharaTab2.nivelCita;
 
   [1, 2, 3].forEach(idx => {
@@ -747,10 +908,13 @@ function validarRestriccionCitaTab2() {
 }
 
 function onNivelChangeTab2() {
-  const nivel = Number(document.getElementById('p2-nivel').value) || 0;
+  const nivelSelect = document.getElementById('p2-nivel');
+  const rawAfiInput = document.getElementById('p2-afiactual');
+  if (!nivelSelect || !rawAfiInput) return;
+
+  const nivel = Number(nivelSelect.value) || 0;
   const reqNivel = REQUISITOS_NIVEL[nivel] || 0;
   const maxPermitido = reqNivel > 0 ? reqNivel - 1 : 0;
-  const rawAfiInput = document.getElementById('p2-afiactual');
   
   let actualVal = Number(rawAfiInput.value.replace(/,/g, '')) || 0;
   if (actualVal > maxPermitido && maxPermitido >= 0) {
@@ -762,6 +926,7 @@ function onNivelChangeTab2() {
 }
 
 function formatAndValidateAffinity(input) {
+  if (!input) return;
   let rawValue = input.value.replace(/[^0-9]/g, '');
   if (rawValue === '') {
     input.value = '0';
@@ -769,7 +934,8 @@ function formatAndValidateAffinity(input) {
     return;
   }
   let num = parseInt(rawValue, 10);
-  const nivel = Number(document.getElementById('p2-nivel').value) || 0;
+  const nivelSelect = document.getElementById('p2-nivel');
+  const nivel = nivelSelect ? Number(nivelSelect.value) || 0 : 0;
   const reqNivel = REQUISITOS_NIVEL[nivel] || 0;
   const maxPermitido = reqNivel > 0 ? reqNivel - 1 : 0;
 
@@ -780,37 +946,30 @@ function formatAndValidateAffinity(input) {
   recalculateTab2();
 }
 
-function syncCitas(itemIdx, isChecked) {
-  const p1Check = document.getElementById('p1-cita' + itemIdx);
-  const p2Check = document.getElementById('p2-cita' + itemIdx);
-  
-  if (p1Check && !p1Check.disabled) p1Check.checked = isChecked;
-  if (p2Check && !p2Check.disabled) p2Check.checked = isChecked;
-  
+function onTab1CheckboxChange() {
   recalculateTab1();
+}
+
+function onTab2CheckboxChange() {
   recalculateTab2();
 }
 
-function syncNubes(itemIdx, isChecked) {
-  const p1Nube = document.getElementById('p1-nube' + itemIdx);
-  const p2Nube = document.getElementById('p2-nube' + itemIdx);
-  if (p1Nube) p1Nube.checked = isChecked;
-  if (p2Nube) p2Nube.checked = isChecked;
-  recalculateTab1();
-  recalculateTab2();
-}
-
-function guardarEnReporte(idx) {
+function guardarEnReporte(idx, event) {
   if (!selectedCharaTab2) return;
 
   const bgCharaImg = getDirectImageUrl(selectedCharaTab2.img_default || selectedCharaTab2.img);
   const avatarImg = getDirectImageUrl(selectedCharaTab2.icon_afi || selectedCharaTab2.img);
 
-  const nivelSel = document.getElementById('p2-nivel').value;
-  const rawAfiInput = document.getElementById('p2-afiactual').value.replace(/,/g, '');
+  const nivelSelElem = document.getElementById('p2-nivel');
+  const rawAfiElem = document.getElementById('p2-afiactual');
+  const cartasElem = document.getElementById('p2-cartas-qty');
+  const boletosElem = document.getElementById('p2-boletos-qty');
+
+  const nivelSel = nivelSelElem ? nivelSelElem.value : '0';
+  const rawAfiInput = rawAfiElem ? rawAfiElem.value.replace(/,/g, '') : '0';
   const afiIngresada = Number(rawAfiInput) || 0;
-  const cartasQty = Number(document.getElementById('p2-cartas-qty').value) || 0;
-  const boletosQty = Number(document.getElementById('p2-boletos-qty').value) || 0;
+  const cartasQty = cartasElem ? Number(cartasElem.value) || 0 : 0;
+  const boletosQty = boletosElem ? Number(boletosElem.value) || 0 : 0;
   const afiExtraRegalos = (cartasQty * 2000) + (boletosQty * 400);
 
   const afiBaseNivel = ACUMULADO_HASTA_NIVEL[Number(nivelSel)] || 0;
@@ -819,12 +978,17 @@ function guardarEnReporte(idx) {
 
   const porcentaje = Math.min(100, Math.max(0, (afiAcumulada / AFINIDAD_MAX) * 100));
 
-  const cantRegalos = document.getElementById(`p2-cant${idx}`).innerText;
-  const diasFaltantes = document.getElementById(`p2-dias${idx}`).innerText;
-  const costoTotalFons = document.getElementById(`p2-costototal${idx}`).innerText;
-  const afiValor = selectedCharaTab2['affinity' + idx];
-  const usaNube = document.getElementById(`p2-nube${idx}`).checked;
+  const cantRegalosElem = document.getElementById(`p2-cant${idx}`);
+  const diasFaltantesElem = document.getElementById(`p2-dias${idx}`);
+  const costoTotalFonsElem = document.getElementById(`p2-costototal${idx}`);
+  const nubeElem = document.getElementById(`p2-nube${idx}`);
   const citaCheck = document.getElementById(`p2-cita${idx}`);
+
+  const cantRegalos = cantRegalosElem ? cantRegalosElem.innerText : '0';
+  const diasFaltantes = diasFaltantesElem ? diasFaltantesElem.innerText : '0';
+  const costoTotalFons = costoTotalFonsElem ? costoTotalFonsElem.innerText : '0';
+  const afiValor = selectedCharaTab2['affinity' + idx];
+  const usaNube = nubeElem ? nubeElem.checked : false;
   const cuentaCita = citaCheck ? citaCheck.checked : false;
 
   const nuevoRegistro = {
@@ -848,10 +1012,12 @@ function guardarEnReporte(idx) {
   localStorage.setItem('reporteGuardado', JSON.stringify(reporteGuardado));
   renderReporte();
 
-  const btn = event.target;
-  const originalText = btn.innerText;
-  btn.innerText = "✓";
-  setTimeout(() => { btn.innerText = originalText; }, 1200);
+  if (event && event.target) {
+    const btn = event.target;
+    const originalText = btn.innerText;
+    btn.innerText = "✓";
+    setTimeout(() => { btn.innerText = originalText; }, 1200);
+  }
 }
 
 function eliminarDelReporte(id) {
@@ -1036,7 +1202,7 @@ function recalculateTab1() {
         <div class="metric-row"><span class="metric-label">${t.precioUnidad}</span><span class="metric-value">${costUnit.toLocaleString('en-US')} <img src="${FONS_ICON_URL}" class="fons-icon" alt="Fons"></span></div>
         <div class="toggle-container-nube" onclick="toggleCardCheckbox('p1-nube${idx}', event)">
           <span>${t.usarNube}</span>
-          <input type="checkbox" id="p1-nube${idx}" ${usaNube ? 'checked' : ''} onchange="syncNubes(${idx}, this.checked)" onclick="event.stopPropagation()">
+          <input type="checkbox" id="p1-nube${idx}" ${usaNube ? 'checked' : ''} onchange="onTab1CheckboxChange()" onclick="event.stopPropagation()">
         </div>
         <div style="background-color: rgba(239, 68, 68, 0.15); border: 1px solid #fecaca; color: #ef4444; padding: 8px; border-radius: 6px; font-size: 11px; text-align: center; margin-top: 8px; font-weight: bold;">
           ${t.sinCitaMsg}
@@ -1094,11 +1260,11 @@ function recalculateTab1() {
       
       <div class="toggle-container" onclick="toggleCardCheckbox('p1-cita${idx}', event)">
         <span>${t.contarCita}</span>
-        <input type="checkbox" id="p1-cita${idx}" ${cuentaCita ? 'checked' : ''} onchange="syncCitas(${idx}, this.checked)" onclick="event.stopPropagation()">
+        <input type="checkbox" id="p1-cita${idx}" ${cuentaCita ? 'checked' : ''} onchange="onTab1CheckboxChange()" onclick="event.stopPropagation()">
       </div>
       <div class="toggle-container-nube" onclick="toggleCardCheckbox('p1-nube${idx}', event)">
         <span>${t.usarNube}</span>
-        <input type="checkbox" id="p1-nube${idx}" ${usaNube ? 'checked' : ''} onchange="syncNubes(${idx}, this.checked)" onclick="event.stopPropagation()">
+        <input type="checkbox" id="p1-nube${idx}" ${usaNube ? 'checked' : ''} onchange="onTab1CheckboxChange()" onclick="event.stopPropagation()">
       </div>
 
       <div class="highlight-box">
@@ -1158,22 +1324,42 @@ function calcularNivelYRestante(puntosTotales) {
 function simRecalcular() {
   if (!selectedCharaSim) return;
 
-  const qtyCartas = Number(document.getElementById('sim-cartas-qty').value) || 0;
-  const qtyBoletos = Number(document.getElementById('sim-boletos-qty').value) || 0;
-  const afiExtraRegalos = (qtyCartas * 2000) + (qtyBoletos * 400);
+  const simCartas = document.getElementById('sim-cartas-qty');
+  const simBoletos = document.getElementById('sim-boletos-qty');
+  const simOutNivel = document.getElementById('sim-out-nivel');
+  const simOutAfinidad = document.getElementById('sim-out-afinidad');
+  const sparkbar = document.getElementById('sim-sparkline-bar');
+  const simProgressText = document.getElementById('sim-progress-text');
+
+  const qtyCartas = simCartas ? Number(simCartas.value) || 0 : 0;
+  const qtyBoletos = simBoletos ? Number(simBoletos.value) || 0 : 0;
+  let afiExtraRegalos = (qtyCartas * 2000) + (qtyBoletos * 400);
+
+  [1, 2, 3].forEach(idx => {
+    const giftInput = document.getElementById(`sim-gift-qty-${idx}`);
+    if (giftInput) {
+      const cant = Number(giftInput.value) || 0;
+      const afiUnit = Number(selectedCharaSim[`affinity${idx}`]) || 0;
+      afiExtraRegalos += (cant * afiUnit);
+    }
+  });
 
   let afiAcumulada = afiExtraRegalos;
   if (afiAcumulada > AFINIDAD_MAX) afiAcumulada = AFINIDAD_MAX;
 
   const res = calcularNivelYRestante(afiAcumulada);
-  document.getElementById('sim-out-nivel').innerText = res.nivel;
-  document.getElementById('sim-out-afinidad').innerText = afiAcumulada.toLocaleString('en-US') + ' 💖';
+  if (simOutNivel) simOutNivel.innerText = res.nivel;
+  
+  if (simOutAfinidad) simOutAfinidad.innerText = res.sobra.toLocaleString('en-US') + ' 💖';
 
   const porcentaje = Math.min(100, Math.max(0, (afiAcumulada / AFINIDAD_MAX) * 100));
-  const sparkbar = document.getElementById('sim-sparkline-bar');
-  sparkbar.style.width = porcentaje + '%';
-  sparkbar.style.backgroundColor = porcentaje < 30 ? '#ef4444' : (porcentaje < 70 ? '#f59e0b' : '#10b981');
-  document.getElementById('sim-progress-text').innerText = `${afiAcumulada.toLocaleString('en-US')} / ${AFINIDAD_MAX.toLocaleString('en-US')}`;
+  if (sparkbar) {
+    sparkbar.style.width = porcentaje + '%';
+    sparkbar.style.backgroundColor = porcentaje < 30 ? '#ef4444' : (porcentaje < 70 ? '#f59e0b' : '#10b981');
+  }
+  if (simProgressText) {
+    simProgressText.innerText = `${afiAcumulada.toLocaleString('en-US')} / ${AFINIDAD_MAX.toLocaleString('en-US')}`;
+  }
 
   simRenderTablaProgresion(res.nivel);
 }
@@ -1202,9 +1388,21 @@ function simRenderTablaProgresion(nivelActualSim = 0) {
 function simEnviarDatos() {
   if (!selectedCharaSim) return;
 
-  const qtyCartas = Number(document.getElementById('sim-cartas-qty').value) || 0;
-  const qtyBoletos = Number(document.getElementById('sim-boletos-qty').value) || 0;
-  const afiExtraRegalos = (qtyCartas * 2000) + (qtyBoletos * 400);
+  const simCartas = document.getElementById('sim-cartas-qty');
+  const simBoletos = document.getElementById('sim-boletos-qty');
+  const qtyCartas = simCartas ? Number(simCartas.value) || 0 : 0;
+  const qtyBoletos = simBoletos ? Number(simBoletos.value) || 0 : 0;
+  let afiExtraRegalos = (qtyCartas * 2000) + (qtyBoletos * 400);
+
+  [1, 2, 3].forEach(idx => {
+    const giftInput = document.getElementById(`sim-gift-qty-${idx}`);
+    if (giftInput) {
+      const cant = Number(giftInput.value) || 0;
+      const afiUnit = Number(selectedCharaSim[`affinity${idx}`]) || 0;
+      afiExtraRegalos += (cant * afiUnit);
+    }
+  });
+
   let afiAcumulada = afiExtraRegalos;
   if (afiAcumulada > AFINIDAD_MAX) afiAcumulada = AFINIDAD_MAX;
 
@@ -1212,8 +1410,10 @@ function simEnviarDatos() {
 
   onCharacterChangeTab2(selectedCharaSim.chara);
 
-  document.getElementById('p2-nivel').value = res.nivel;
-  document.getElementById('p2-afiactual').value = res.sobra.toLocaleString('en-US');
+  const p2Nivel = document.getElementById('p2-nivel');
+  const p2Afiactual = document.getElementById('p2-afiactual');
+  if (p2Nivel) p2Nivel.value = res.nivel;
+  if (p2Afiactual) p2Afiactual.value = res.sobra.toLocaleString('en-US');
 
   const tabCalcBtn = document.querySelectorAll('.nav-sidebar-btn')[2];
   if (tabCalcBtn) {
@@ -1230,13 +1430,16 @@ function recalculateTab2() {
 
   const nivelSelect = document.getElementById('p2-nivel');
   const afiActualInput = document.getElementById('p2-afiactual');
+  if (!nivelSelect || !afiActualInput) return;
 
   const nivelSel = Number(nivelSelect.value) || 0;
   const rawAfiInput = afiActualInput.value.replace(/,/g, '');
   const afiIngresada = Number(rawAfiInput) || 0;
 
-  const cartasQty = Number(document.getElementById('p2-cartas-qty').value) || 0;
-  const boletosQty = Number(document.getElementById('p2-boletos-qty').value) || 0;
+  const cartasQtyElem = document.getElementById('p2-cartas-qty');
+  const boletosQtyElem = document.getElementById('p2-boletos-qty');
+  const cartasQty = cartasQtyElem ? Number(cartasQtyElem.value) || 0 : 0;
+  const boletosQty = boletosQtyElem ? Number(boletosQtyElem.value) || 0 : 0;
   const afiExtraRegalos = (cartasQty * 2000) + (boletosQty * 400);
 
   const afiBaseNivel = ACUMULADO_HASTA_NIVEL[nivelSel] || 0;
@@ -1245,12 +1448,19 @@ function recalculateTab2() {
 
   const porcentaje = Math.min(100, Math.max(0, (afiAcumulada / AFINIDAD_MAX) * 100));
   const sparkbar = document.getElementById('sparkline-bar');
-  sparkbar.style.width = porcentaje + '%';
-  sparkbar.style.backgroundColor = porcentaje < 30 ? '#ef4444' : (porcentaje < 70 ? '#f59e0b' : '#10b981');
-  document.getElementById('p2-progress-text').innerText = `${afiAcumulada.toLocaleString('en-US')} / ${AFINIDAD_MAX.toLocaleString('en-US')}`;
+  const p2ProgressText = document.getElementById('p2-progress-text');
+  const p2Necesita = document.getElementById('p2-necesita');
+
+  if (sparkbar) {
+    sparkbar.style.width = porcentaje + '%';
+    sparkbar.style.backgroundColor = porcentaje < 30 ? '#ef4444' : (porcentaje < 70 ? '#f59e0b' : '#10b981');
+  }
+  if (p2ProgressText) {
+    p2ProgressText.innerText = `${afiAcumulada.toLocaleString('en-US')} / ${AFINIDAD_MAX.toLocaleString('en-US')}`;
+  }
 
   const afiFaltanteGeneral = Math.max(0, AFINIDAD_MAX - afiAcumulada);
-  document.getElementById('p2-necesita').value = afiFaltanteGeneral.toLocaleString('en-US');
+  if (p2Necesita) p2Necesita.value = afiFaltanteGeneral.toLocaleString('en-US');
 
   const nivelCitaRaw = selectedCharaTab2.nivelCita;
   let tieneCita = true;
@@ -1276,7 +1486,8 @@ function recalculateTab2() {
   [1, 2, 3].forEach(idx => {
     const afiBase = selectedCharaTab2['affinity' + idx];
     const costUnit = selectedCharaTab2['itemcost_' + idx];
-    const usaNube = document.getElementById('p2-nube' + idx).checked;
+    const nubeElem = document.getElementById('p2-nube' + idx);
+    const usaNube = nubeElem ? nubeElem.checked : false;
 
     const checkboxCita = document.getElementById(`p2-cita${idx}`);
     const cuentaCita = checkboxCita && checkboxCita.checked && !checkboxCita.disabled;
@@ -1337,12 +1548,19 @@ function recalculateTab2() {
 
     const nubesTotalesUsadas = usaNube ? diasReq : 0;
 
-    document.getElementById(`p2-afi${idx}-head`).innerHTML = `${afiBase} <img src="${AFFINITY_ICON_URL}" class="affinity-icon" alt="Afinidad">`;
-    document.getElementById(`p2-cant${idx}`).innerText = cantRegalos;
-    document.getElementById(`p2-dias${idx}`).innerText = diasReq;
-    document.getElementById(`p2-cost${idx}`).innerHTML = costUnit.toLocaleString('en-US') + ` <img src="${FONS_ICON_URL}" class="fons-icon" alt="Fons">`;
-    document.getElementById(`p2-costototal${idx}`).innerHTML = costoTotal.toLocaleString('en-US') + ` <img src="${FONS_ICON_URL}" class="fons-icon" alt="Fons">`;
-    document.getElementById(`p2-nubesusadas${idx}`).innerText = nubesTotalesUsadas;
+    const headElem = document.getElementById(`p2-afi${idx}-head`);
+    const cantElem = document.getElementById(`p2-cant${idx}`);
+    const diasElem = document.getElementById(`p2-dias${idx}`);
+    const costElem = document.getElementById(`p2-cost${idx}`);
+    const costTotalElem = document.getElementById(`p2-costototal${idx}`);
+    const nubesUsadasElem = document.getElementById(`p2-nubesusadas${idx}`);
+
+    if (headElem) headElem.innerHTML = `${afiBase} <img src="${AFFINITY_ICON_URL}" class="affinity-icon" alt="Afinidad">`;
+    if (cantElem) cantElem.innerText = cantRegalos;
+    if (diasElem) diasElem.innerText = diasReq;
+    if (costElem) costElem.innerHTML = costUnit.toLocaleString('en-US') + ` <img src="${FONS_ICON_URL}" class="fons-icon" alt="Fons">`;
+    if (costTotalElem) costTotalElem.innerHTML = costoTotal.toLocaleString('en-US') + ` <img src="${FONS_ICON_URL}" class="fons-icon" alt="Fons">`;
+    if (nubesUsadasElem) nubesUsadasElem.innerText = nubesTotalesUsadas;
   });
 }
 

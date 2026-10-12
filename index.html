@@ -2,7 +2,12 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <title>Calculadora de Afinidad v1.3.0</title>
+  <title>Calculadora de Afinidad v1.3.2</title>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -45,7 +50,14 @@
       </div>
 
       <div class="sidebar-footer">
-        <button class="top-action-btn" onclick="toggleLanguage()" title="Cambiar Idioma / Change Language" id="lang-btn">🇺🇸 EN</button>
+        <button class="top-action-btn" onclick="toggleLanguage()" title="Cambiar Idioma / Change Language" id="lang-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+          <span>EN</span>
+        </button>
         <button class="top-action-btn" onclick="toggleTheme()" title="Cambiar tema claro/oscuro" id="theme-toggle-btn">
           <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
           <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
@@ -159,7 +171,7 @@
               <div class="sparkline-wrapper">
                 <div class="sparkline-container">
                   <div id="sparkline-bar" class="sparkline-bar"></div>
-                  <div id="p2-progress-text" class="sparkline-text">0 / 56,100</div>
+                  <div id="p2-progress-text" class="sparkline-text">0 / 56,000</div>
                 </div>
               </div>
 
@@ -169,7 +181,6 @@
                 
                 <label style="font-size:12px; margin-top:10px; display:block; font-weight:700; color:var(--text-muted);" data-i18n="nivel">Nivel</label>
                 <select id="p2-nivel" onchange="onNivelChangeTab2()" style="margin-top:4px;">
-                  <option value="0">0</option>
                   <option value="1">1</option>
                   <option value="2">2</option>
                   <option value="3">3</option>
@@ -365,7 +376,12 @@
             </div>
 
             <div class="sim-gifts-box">
-              <div class="section-title" data-i18n="regalosSinCondicion">REGALOS SIN CONDICIÓN</div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div class="section-title" style="margin: 0; text-align: left;" data-i18n="regalosSinCondicion">REGALOS SIN CONDICIÓN</div>
+                <button class="delete-report-btn" onclick="resetSimUnconditional()" title="Limpiar regalos sin condición" style="width: 22px; height: 22px; font-size: 12px;">
+                  ↺
+                </button>
+              </div>
               
               <div class="sim-gift-card-lg" onclick="openModal(CARD_WRITE_IMG_URL)">
                 <img src="https://lh3.googleusercontent.com/d/1C9x-jmc4PuFCqtxZh8xinbZj-oTKR6TX" alt="Carta">
@@ -392,7 +408,12 @@
 
             <!-- REGALOS ESPECÍFICOS DEL PERSONAJE -->
             <div class="sim-gifts-box" style="margin-top: 15px;">
-              <div class="section-title">REGALOS</div>
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                <div class="section-title" style="margin: 0; text-align: left;">REGALOS</div>
+                <button class="delete-report-btn" onclick="resetSimNormalGifts()" title="Limpiar regalos normales" style="width: 22px; height: 22px; font-size: 12px;">
+                  ↺
+                </button>
+              </div>
               
               <div class="sim-gift-card-lg" onclick="openModal(document.getElementById('sim-gift-img-1').src)">
                 <img id="sim-gift-img-1" src="" alt="Item 1">

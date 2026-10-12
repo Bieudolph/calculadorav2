@@ -12,12 +12,10 @@ const AFFINITY_ICON_URL = 'https://lh3.googleusercontent.com/d/16Yzy8DsFN4jdaacX
 const CARD_WRITE_IMG_URL = 'https://lh3.googleusercontent.com/d/1C9x-jmc4PuFCqtxZh8xinbZj-oTKR6TX';
 const MOVIE_TICKET_IMG_URL = 'https://lh3.googleusercontent.com/d/14PzrxqsRtv8vZU3cnme0eC2d40PinhVr';
 
-const REQUISITOS_NIVEL = [100, 500, 1000, 2000, 3500, 5000, 7000, 9000, 12000, 16000, 0];
-const ACUMULADO_HASTA_NIVEL = [0, 100, 600, 1600, 3600, 7100, 12100, 19100, 28100, 40100, 56100];
-const AFINIDAD_MAX = 56100;
-const AFINIDAD_ITEMS_MAX = 56000;
+const REQUISITOS_NIVEL = [500, 1000, 2000, 3500, 5000, 7000, 9000, 12000, 16000, 0];
+const ACUMULADO_HASTA_NIVEL = [0, 500, 1500, 3500, 7000, 12000, 19000, 28000, 40000, 56000];
+const AFINIDAD_MAX = 56000;
 
-// Mapa de colores predefinidos actualizados y otros tonos
 const COLOR_MAP = {
   'rojo': '#ef4444',
   'azul': '#3b82f6',
@@ -217,7 +215,8 @@ function aplicarTraducciones() {
   
   const langBtn = document.getElementById('lang-btn');
   if (langBtn) {
-    langBtn.innerText = currentLang === 'es' ? '🇪🇸 ES' : '🇺🇸 EN';
+    const globeSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`;
+    langBtn.innerHTML = `${globeSVG} <span>${currentLang === 'es' ? 'ES' : 'EN'}</span>`;
   }
 }
 
@@ -700,7 +699,7 @@ function onCharacterChangeTab2(name) {
 
   if (sel2) sel2.value = name;
   if (afiactual) afiactual.value = '0';
-  if (nivel) nivel.value = '0';
+  if (nivel) nivel.value = '1';
   if (cartasQty) cartasQty.value = '0';
   if (boletosQty) boletosQty.value = '0';
 
@@ -756,7 +755,7 @@ function aplicarRegalosTab2() {
 
   if (!nivelSelect || !afiActualInput || !cartasInput || !boletosInput) return;
 
-  const nivelSel = Number(nivelSelect.value) || 0;
+  const nivelSel = Number(nivelSelect.value) || 1;
   const rawAfiInput = afiActualInput.value.replace(/,/g, '');
   const afiIngresada = Number(rawAfiInput) || 0;
 
@@ -764,7 +763,7 @@ function aplicarRegalosTab2() {
   const boletosQty = Number(boletosInput.value) || 0;
   const afiExtraRegalos = (cartasQty * 2000) + (boletosQty * 400);
 
-  const afiBaseNivel = ACUMULADO_HASTA_NIVEL[nivelSel] || 0;
+  const afiBaseNivel = ACUMULADO_HASTA_NIVEL[nivelSel - 1] || 0;
   let afiAcumuladaTotal = afiBaseNivel + afiIngresada + afiExtraRegalos;
   if (afiAcumuladaTotal > AFINIDAD_MAX) afiAcumuladaTotal = AFINIDAD_MAX;
 
@@ -798,16 +797,6 @@ function simOnCharacterChange(name) {
 
   currentOutfitIndex = 0;
 
-  const avatarUrl = getDirectImageUrl(selectedCharaSim.img_default || selectedCharaSim.img);
-  const avatarContainer = document.getElementById('sim-avatar-container');
-  if (avatarContainer) {
-    if (avatarUrl) {
-      avatarContainer.innerHTML = `<img src="${avatarUrl}" alt="Avatar" onclick="openModal('${avatarUrl}')">`;
-    } else {
-      avatarContainer.innerHTML = `<span style="font-size:10px;">${translations[currentLang].avatar}</span>`;
-    }
-  }
-
   simActualizarOutfitVisual();
   simActualizarRegalosPersonaje();
   simRecalcular();
@@ -817,10 +806,7 @@ function simActualizarOutfitVisual() {
   if (!selectedCharaSim) return;
 
   const viewer = document.getElementById('sim-outfit-viewer-container');
-  const nameDisplay = document.getElementById('sim-display-name');
   const outfitDisplay = document.getElementById('sim-display-outfit');
-
-  if (nameDisplay) nameDisplay.innerText = selectedCharaSim.chara;
 
   let imgUrl = getDirectImageUrl(selectedCharaSim.img_default || selectedCharaSim.img);
   let outfitNameText = selectedCharaSim.outfit_name || translations[currentLang].defaultAttire;
@@ -885,7 +871,7 @@ function validarRestriccionCitaTab2() {
   if (!selectedCharaTab2) return;
 
   const nivelSelect = document.getElementById('p2-nivel');
-  const nivelSel = nivelSelect ? Number(nivelSelect.value) || 0 : 0;
+  const nivelSel = nivelSelect ? Number(nivelSelect.value) || 1 : 1;
   const nivelCitaRaw = selectedCharaTab2.nivelCita;
 
   [1, 2, 3].forEach(idx => {
@@ -912,8 +898,8 @@ function onNivelChangeTab2() {
   const rawAfiInput = document.getElementById('p2-afiactual');
   if (!nivelSelect || !rawAfiInput) return;
 
-  const nivel = Number(nivelSelect.value) || 0;
-  const reqNivel = REQUISITOS_NIVEL[nivel] || 0;
+  const nivel = Number(nivelSelect.value) || 1;
+  const reqNivel = REQUISITOS_NIVEL[nivel - 1] || 0;
   const maxPermitido = reqNivel > 0 ? reqNivel - 1 : 0;
   
   let actualVal = Number(rawAfiInput.value.replace(/,/g, '')) || 0;
@@ -935,8 +921,8 @@ function formatAndValidateAffinity(input) {
   }
   let num = parseInt(rawValue, 10);
   const nivelSelect = document.getElementById('p2-nivel');
-  const nivel = nivelSelect ? Number(nivelSelect.value) || 0 : 0;
-  const reqNivel = REQUISITOS_NIVEL[nivel] || 0;
+  const nivel = nivelSelect ? Number(nivelSelect.value) || 1 : 1;
+  const reqNivel = REQUISITOS_NIVEL[nivel - 1] || 0;
   const maxPermitido = reqNivel > 0 ? reqNivel - 1 : 0;
 
   if (num > maxPermitido && maxPermitido >= 0) {
@@ -965,14 +951,14 @@ function guardarEnReporte(idx, event) {
   const cartasElem = document.getElementById('p2-cartas-qty');
   const boletosElem = document.getElementById('p2-boletos-qty');
 
-  const nivelSel = nivelSelElem ? nivelSelElem.value : '0';
+  const nivelSel = nivelSelElem ? nivelSelElem.value : '1';
   const rawAfiInput = rawAfiElem ? rawAfiElem.value.replace(/,/g, '') : '0';
   const afiIngresada = Number(rawAfiInput) || 0;
   const cartasQty = cartasElem ? Number(cartasElem.value) || 0 : 0;
   const boletosQty = boletosElem ? Number(boletosElem.value) || 0 : 0;
   const afiExtraRegalos = (cartasQty * 2000) + (boletosQty * 400);
 
-  const afiBaseNivel = ACUMULADO_HASTA_NIVEL[Number(nivelSel)] || 0;
+  const afiBaseNivel = ACUMULADO_HASTA_NIVEL[Number(nivelSel) - 1] || 0;
   let afiAcumulada = afiBaseNivel + afiIngresada + afiExtraRegalos;
   if (afiAcumulada > AFINIDAD_MAX) afiAcumulada = AFINIDAD_MAX;
 
@@ -1042,13 +1028,27 @@ function exportReportToPNG() {
   const deleteButtons = container.querySelectorAll('.delete-report-btn');
   deleteButtons.forEach(btn => btn.style.display = 'none');
 
+  const originalWidth = container.style.width;
+  container.style.width = '1150px';
+
+  const cards = container.querySelectorAll('.report-card');
+  cards.forEach(card => {
+    card.style.width = '1150px';
+    card.style.minWidth = '1150px';
+  });
+
   html2canvas(container, {
     scale: 2,
-    width: 1050,
-    windowWidth: 1050,
+    width: 1150,
+    windowWidth: 1300,
     backgroundColor: getComputedStyle(document.body).getPropertyValue('--bg-color').trim(),
     useCORS: true
   }).then(canvas => {
+    container.style.width = originalWidth;
+    cards.forEach(card => {
+      card.style.width = '';
+      card.style.minWidth = '';
+    });
     deleteButtons.forEach(btn => btn.style.display = 'flex');
 
     const link = document.createElement('a');
@@ -1057,6 +1057,11 @@ function exportReportToPNG() {
     link.click();
   }).catch(err => {
     console.error("Error al generar la imagen:", err);
+    container.style.width = originalWidth;
+    cards.forEach(card => {
+      card.style.width = '';
+      card.style.minWidth = '';
+    });
     deleteButtons.forEach(btn => btn.style.display = 'flex');
   });
 }
@@ -1079,7 +1084,7 @@ function renderReporte() {
     const t = translations[currentLang];
     const bgStyle = item.bgCharaImg ? `--bg-chara-img: url('${item.bgCharaImg}');` : '';
     const pct = item.porcentaje !== undefined ? item.porcentaje : 0;
-    const textoProgreso = item.afiAcumuladaTexto || `0 / 56,100`;
+    const textoProgreso = item.afiAcumuladaTexto || `0 / 56,000`;
     
     const charaObj = charactersData.find(c => c.chara === item.chara);
     let itemName = item.itemName || '';
@@ -1162,13 +1167,11 @@ function recalculateTab1() {
   }
 
   let afnTramo1 = 0;
-  if (tieneCita) {
-    for (let i = 0; i <= umbralCita && i < REQUISITOS_NIVEL.length; i++) {
-      afnTramo1 += REQUISITOS_NIVEL[i];
-    }
+  if (tieneCita && umbralCita >= 1 && umbralCita <= 10) {
+    afnTramo1 = ACUMULADO_HASTA_NIVEL[umbralCita - 1] || 0;
   }
 
-  let afnTramo2 = Math.max(0, AFINIDAD_ITEMS_MAX - afnTramo1);
+  let afnTramo2 = Math.max(0, AFINIDAD_MAX - afnTramo1);
 
   [1, 2, 3].forEach(idx => {
     const detailsEl = document.getElementById(`p1-details-${idx}`);
@@ -1184,16 +1187,11 @@ function recalculateTab1() {
     const t = translations[currentLang];
 
     if (!tieneCita) {
-      const regalosComprados = usaNube ? 2 : 3;
       const afiRegalosDia = usaNube ? (afiBase * 2 + 400) : (afiBase * 3);
-      const diasReq = afiRegalosDia > 0 ? Math.ceil(AFINIDAD_ITEMS_MAX / afiRegalosDia) : 0;
-      let cantRegalos = diasReq * regalosComprados;
-      
-      let afiTotalGenerada = diasReq * afiRegalosDia;
-      if (afiTotalGenerada - AFINIDAD_ITEMS_MAX >= afiBase && (diasReq > 0)) {
-        cantRegalos -= 1;
-      }
-
+      const diasReq = afiRegalosDia > 0 ? Math.ceil(AFINIDAD_MAX / afiRegalosDia) : 0;
+      const afiNubesTotal = usaNube ? (diasReq * 400) : 0;
+      const afiFaltanteRegalos = Math.max(0, AFINIDAD_MAX - afiNubesTotal);
+      const cantRegalos = afiBase > 0 ? Math.ceil(afiFaltanteRegalos / afiBase) : 0;
       const costoTotal = cantRegalos * costUnit;
       const nubesTotalesUsadas = usaNube ? diasReq : 0;
 
@@ -1220,37 +1218,39 @@ function recalculateTab1() {
     const checkboxCita = document.getElementById(`p1-cita${idx}`);
     const cuentaCita = checkboxCita && checkboxCita.checked && !checkboxCita.disabled;
 
-    const regalosCompradosT1 = usaNube ? 2 : 3;
-    const afiRegalosDiaT1 = usaNube ? (afiBase * 2 + 400) : (afiBase * 3);
-    const diasTramo1 = afiRegalosDiaT1 > 0 ? Math.ceil(afnTramo1 / afiRegalosDiaT1) : 0;
-    let cantRegalosT1 = diasTramo1 * regalosCompradosT1;
-    let afiGenT1 = diasTramo1 * afiRegalosDiaT1;
-    if (afiGenT1 - afnTramo1 >= afiBase && diasTramo1 > 0) {
-      cantRegalosT1 -= 1;
-    }
-    const fonsTramo1 = cantRegalosT1 * costUnit;
+    let diasReq = 0;
+    let cantRegalos = 0;
+    let costoTotal = 0;
 
-    const regalosCompradosT2 = usaNube ? 2 : 3; 
-    const afiRegalosDiaT2 = usaNube ? (afiBase * 2 + 400) : (afiBase * 3);
-    const afiCitaDia = cuentaCita ? 200 : 0;
-    const afiTotalDiaT2 = afiRegalosDiaT2 + afiCitaDia;
-    
-    let diasTramo2 = 0;
-    let cantRegalosT2 = 0;
-    let fonsTramo2 = 0;
-    if (afnTramo2 > 0) {
-      diasTramo2 = afiTotalDiaT2 > 0 ? Math.ceil(afnTramo2 / afiTotalDiaT2) : 0;
-      cantRegalosT2 = diasTramo2 * regalosCompradosT2;
-      let afiGenT2 = diasTramo2 * afiTotalDiaT2;
-      if (afiGenT2 - afnTramo2 >= afiBase && diasTramo2 > 0) {
-        cantRegalosT2 -= 1;
+    if (!cuentaCita) {
+      const afiRegalosDia = usaNube ? (afiBase * 2 + 400) : (afiBase * 3);
+      diasReq = afiRegalosDia > 0 ? Math.ceil(AFINIDAD_MAX / afiRegalosDia) : 0;
+      const afiNubesTotal = usaNube ? (diasReq * 400) : 0;
+      const afiFaltanteRegalos = Math.max(0, AFINIDAD_MAX - afiNubesTotal);
+      cantRegalos = afiBase > 0 ? Math.ceil(afiFaltanteRegalos / afiBase) : 0;
+      costoTotal = cantRegalos * costUnit;
+    } else {
+      const afiRegalosDiaT1 = usaNube ? (afiBase * 2 + 400) : (afiBase * 3);
+      const diasTramo1 = afiRegalosDiaT1 > 0 ? Math.ceil(afnTramo1 / afiRegalosDiaT1) : 0;
+
+      const afiRegalosDiaT2 = usaNube ? (afiBase * 2 + 400) : (afiBase * 3);
+      const afiCitaDia = 200;
+      const afiTotalDiaT2 = afiRegalosDiaT2 + afiCitaDia;
+      
+      let diasTramo2 = 0;
+      if (afnTramo2 > 0) {
+        diasTramo2 = afiTotalDiaT2 > 0 ? Math.ceil(afnTramo2 / afiTotalDiaT2) : 0;
       }
-      fonsTramo2 = cantRegalosT2 * costUnit;
+
+      diasReq = diasTramo1 + diasTramo2;
+
+      let afiNubesTotal = usaNube ? (diasReq * 400) : 0;
+      let afiCitasTotal = diasTramo2 * 200;
+      let afiFaltanteRegalos = Math.max(0, AFINIDAD_MAX - afiNubesTotal - afiCitasTotal);
+      cantRegalos = afiBase > 0 ? Math.ceil(afiFaltanteRegalos / afiBase) : 0;
+      costoTotal = cantRegalos * costUnit;
     }
 
-    const diasReq = diasTramo1 + diasTramo2;
-    const cantRegalos = cantRegalosT1 + cantRegalosT2;
-    const costoTotal = fonsTramo1 + fonsTramo2;
     const nubesTotalesUsadas = usaNube ? diasReq : 0;
     const verDetallesTexto = currentLang === 'en' ? 'View tier details' : 'Ver detalles por tramos';
 
@@ -1278,26 +1278,14 @@ function recalculateTab1() {
         <summary>${verDetallesTexto}</summary>
         <div class="accordion-content">
           <table class="excel-table">
-            <tr><th colspan="2">${currentLang === 'en' ? 'Affection details level 0 to ' + umbralCita : 'Detalles de afinidad nivel 0 a ' + umbralCita}</th></tr>
+            <tr><th colspan="2">${currentLang === 'en' ? 'Affection details level 1 to ' + umbralCita : 'Detalles de afinidad nivel 1 a ' + umbralCita}</th></tr>
             <tr><td>${currentLang === 'en' ? 'Affection required:' : 'Afinidad necesaria:'}</td><td style="text-align:right;">${afnTramo1.toLocaleString('en-US')}</td></tr>
-            <tr><td>${currentLang === 'en' ? 'Daily 400 gifts:' : 'Regalos de 400 diario:'}</td><td style="text-align:right;">${regalosCompradosT1}</td></tr>
             <tr><td>${currentLang === 'en' ? 'Fluffy Cotton?' : '¿Regalo por nube?'}</td><td style="text-align:right;">${usaNube ? 1 : 0}</td></tr>
-            <tr><td>${currentLang === 'en' ? 'Gifts cost (day):' : 'Costo de regalos (día):'}</td><td style="text-align:right;">${(regalosCompradosT1 * costUnit).toLocaleString('en-US')}</td></tr>
-            <tr><td>${currentLang === 'en' ? 'Fons spent in ' + diasTramo1 + ' days:' : 'Total gastado en ' + diasTramo1 + ' días:'}</td><td style="text-align:right;">${fonsTramo1.toLocaleString('en-US')}</td></tr>
           </table>
 
           <table class="excel-table" style="margin-top: 6px;">
             <tr><th colspan="2">${currentLang === 'en' ? 'Affection details level ' + umbralCita + ' to 10' : 'Detalles de afinidad nivel ' + umbralCita + ' al 10'}</th></tr>
-            <tr><td>${currentLang === 'en' ? 'Daily 400 gifts:' : 'Regalos de 400 diario:'}</td><td style="text-align:right;">${regalosCompradosT2}</td></tr>
             <tr><td>${currentLang === 'en' ? 'Fluffy Cotton?' : '¿Regalo por nube?'}</td><td style="text-align:right;">${usaNube ? 1 : 0}</td></tr>
-            <tr><td>${currentLang === 'en' ? 'Gifts cost (day):' : 'Costo de regalos (día):'}</td><td style="text-align:right;">${(regalosCompradosT2 * costUnit).toLocaleString('en-US')}</td></tr>
-            <tr><td>${currentLang === 'en' ? 'Total spent in ' + diasTramo2 + ' days:' : 'Total gastado en ' + diasTramo2 + ' días:'}</td><td style="text-align:right;">${fonsTramo2.toLocaleString('en-US')}</td></tr>
-          </table>
-
-          <table class="excel-table" style="margin-top: 6px;">
-            <tr><td>${currentLang === 'en' ? 'Daily affection (gifts):' : 'Afinidad por día (regalos):'}</td><td style="text-align:right;">${afiRegalosDiaT2}</td></tr>
-            <tr><td>${currentLang === 'en' ? 'Include date?' : '¿Contar cita?:'}</td><td style="text-align:right;">${afiCitaDia}</td></tr>
-            <tr><td>${currentLang === 'en' ? 'Total daily affection:' : 'Afinidad total por día:'}</td><td style="text-align:right; font-weight:bold;">${afiTotalDiaT2}</td></tr>
           </table>
         </div>
       </details>
@@ -1306,17 +1294,17 @@ function recalculateTab1() {
 }
 
 function calcularNivelYRestante(puntosTotales) {
-  if (puntosTotales <= 0) return { nivel: 0, sobra: 0 };
+  if (puntosTotales <= 0) return { nivel: 1, sobra: 0 };
   if (puntosTotales >= AFINIDAD_MAX) return { nivel: 10, sobra: 0 };
 
-  let nivelEncontrado = 0;
+  let nivelEncontrado = 1;
   for (let i = 0; i < ACUMULADO_HASTA_NIVEL.length - 1; i++) {
     if (puntosTotales >= ACUMULADO_HASTA_NIVEL[i] && puntosTotales < ACUMULADO_HASTA_NIVEL[i+1]) {
-      nivelEncontrado = i;
+      nivelEncontrado = i + 1;
       break;
     }
   }
-  const baseNivelActual = ACUMULADO_HASTA_NIVEL[nivelEncontrado] || 0;
+  const baseNivelActual = ACUMULADO_HASTA_NIVEL[nivelEncontrado - 1] || 0;
   const sobra = puntosTotales - baseNivelActual;
   return { nivel: nivelEncontrado, sobra: sobra };
 }
@@ -1350,7 +1338,7 @@ function simRecalcular() {
   const res = calcularNivelYRestante(afiAcumulada);
   if (simOutNivel) simOutNivel.innerText = res.nivel;
   
-  if (simOutAfinidad) simOutAfinidad.innerText = res.sobra.toLocaleString('en-US') + ' 💖';
+  if (simOutAfinidad) simOutAfinidad.innerHTML = res.sobra.toLocaleString('en-US') + ' <img src="' + AFFINITY_ICON_URL + '" class="affinity-icon" alt="Affinity">';
 
   const porcentaje = Math.min(100, Math.max(0, (afiAcumulada / AFINIDAD_MAX) * 100));
   if (sparkbar) {
@@ -1364,14 +1352,14 @@ function simRecalcular() {
   simRenderTablaProgresion(res.nivel);
 }
 
-function simRenderTablaProgresion(nivelActualSim = 0) {
+function simRenderTablaProgresion(nivelActualSim = 1) {
   const tbody = document.getElementById('sim-table-body');
   if (!tbody) return;
 
   let html = '';
-  for (let i = 0; i <= 10; i++) {
-    const acumu = ACUMULADO_HASTA_NIVEL[i] || 0;
-    const req = REQUISITOS_NIVEL[i] || 0;
+  for (let i = 1; i <= 10; i++) {
+    const acumu = ACUMULADO_HASTA_NIVEL[i - 1] || 0;
+    const req = REQUISITOS_NIVEL[i - 1] || 0;
     const isActive = (i === nivelActualSim) ? 'active-sim-level' : '';
 
     html += `
@@ -1432,7 +1420,7 @@ function recalculateTab2() {
   const afiActualInput = document.getElementById('p2-afiactual');
   if (!nivelSelect || !afiActualInput) return;
 
-  const nivelSel = Number(nivelSelect.value) || 0;
+  const nivelSel = Number(nivelSelect.value) || 1;
   const rawAfiInput = afiActualInput.value.replace(/,/g, '');
   const afiIngresada = Number(rawAfiInput) || 0;
 
@@ -1442,7 +1430,7 @@ function recalculateTab2() {
   const boletosQty = boletosQtyElem ? Number(boletosQtyElem.value) || 0 : 0;
   const afiExtraRegalos = (cartasQty * 2000) + (boletosQty * 400);
 
-  const afiBaseNivel = ACUMULADO_HASTA_NIVEL[nivelSel] || 0;
+  const afiBaseNivel = ACUMULADO_HASTA_NIVEL[nivelSel - 1] || 0;
   let afiAcumulada = afiBaseNivel + afiIngresada + afiExtraRegalos;
   if (afiAcumulada > AFINIDAD_MAX) afiAcumulada = AFINIDAD_MAX;
 
@@ -1477,10 +1465,8 @@ function recalculateTab2() {
   }
 
   let afnTramo1Meta = 0;
-  if (tieneCita) {
-    for (let i = 0; i <= umbralCita && i < REQUISITOS_NIVEL.length; i++) {
-      afnTramo1Meta += REQUISITOS_NIVEL[i];
-    }
+  if (tieneCita && umbralCita >= 1 && umbralCita <= 10) {
+    afnTramo1Meta = ACUMULADO_HASTA_NIVEL[umbralCita - 1] || 0;
   }
 
   [1, 2, 3].forEach(idx => {
@@ -1496,54 +1482,39 @@ function recalculateTab2() {
     let cantRegalos = 0;
     let costoTotal = 0;
 
-    if (!tieneCita) {
-      const afiFaltanteItems = Math.max(0, AFINIDAD_ITEMS_MAX - afiAcumulada);
-      const regalosComprados = usaNube ? 2 : 3;
+    if (!tieneCita || !cuentaCita) {
+      const afiFaltanteItems = Math.max(0, AFINIDAD_MAX - afiAcumulada);
       const afiRegalosDia = usaNube ? (afiBase * 2 + 400) : (afiBase * 3);
       diasReq = afiRegalosDia > 0 ? Math.ceil(afiFaltanteItems / afiRegalosDia) : 0;
-      cantRegalos = diasReq * regalosComprados;
-      let afiTotalGenerada = diasReq * afiRegalosDia;
-      if (afiTotalGenerada - afiFaltanteItems >= afiBase && diasReq > 0) {
-        cantRegalos -= 1;
-      }
+      
+      const afiNubesTotal = usaNube ? (diasReq * 400) : 0;
+      const afiFaltanteRegalos = Math.max(0, AFINIDAD_MAX - afiAcumulada - afiNubesTotal);
+      cantRegalos = afiBase > 0 ? Math.ceil(afiFaltanteRegalos / afiBase) : 0;
       costoTotal = cantRegalos * costUnit;
     } else {
       let afnFaltanteTramo1 = Math.max(0, afnTramo1Meta - afiAcumulada);
       let afiAcumuladaDespuesTramo1 = Math.max(afnTramo1Meta, afiAcumulada);
-      let afnFaltanteTramo2 = Math.max(0, AFINIDAD_ITEMS_MAX - afiAcumuladaDespuesTramo1);
+      let afnFaltanteTramo2 = Math.max(0, AFINIDAD_MAX - afiAcumuladaDespuesTramo1);
 
-      let diasT1 = 0, cantT1 = 0, fonsT1 = 0;
-      if (afnFaltanteTramo1 > 0) {
-        const regalosCompradosT1 = usaNube ? 2 : 3;
-        const afiRegalosDiaT1 = usaNube ? (afiBase * 2 + 400) : (afiBase * 3);
-        diasT1 = afiRegalosDiaT1 > 0 ? Math.ceil(afnFaltanteTramo1 / afiRegalosDiaT1) : 0;
-        cantT1 = diasT1 * regalosCompradosT1;
-        let afiGenT1 = diasT1 * afiRegalosDiaT1;
-        if (afiGenT1 - afnFaltanteTramo1 >= afiBase && diasT1 > 0) {
-          cantT1 -= 1;
-        }
-        fonsT1 = cantT1 * costUnit;
-      }
+      let afiRegalosDiaT1 = usaNube ? (afiBase * 2 + 400) : (afiBase * 3);
+      let diasT1 = afiRegalosDiaT1 > 0 ? Math.ceil(afnFaltanteTramo1 / afiRegalosDiaT1) : 0;
 
-      let diasT2 = 0, cantT2 = 0, fonsT2 = 0;
+      let afiRegalosDiaT2 = usaNube ? (afiBase * 2 + 400) : (afiBase * 3);
+      let afiCitaDia = 200;
+      let afiTotalDiaT2 = afiRegalosDiaT2 + afiCitaDia;
+
+      let diasT2 = 0;
       if (afnFaltanteTramo2 > 0) {
-        const regalosCompradosT2 = usaNube ? 2 : 3;
-        const afiRegalosDiaT2 = usaNube ? (afiBase * 2 + 400) : (afiBase * 3);
-        const afiCitaDia = cuentaCita ? 200 : 0;
-        const afiTotalDiaT2 = afiRegalosDiaT2 + afiCitaDia;
-
         diasT2 = afiTotalDiaT2 > 0 ? Math.ceil(afnFaltanteTramo2 / afiTotalDiaT2) : 0;
-        cantT2 = diasT2 * regalosCompradosT2;
-        let afiGenT2 = diasT2 * afiTotalDiaT2;
-        if (afiGenT2 - afnFaltanteTramo2 >= afiBase && diasT2 > 0) {
-          cantT2 -= 1;
-        }
-        fonsT2 = cantT2 * costUnit;
       }
 
       diasReq = diasT1 + diasT2;
-      cantRegalos = cantT1 + cantT2;
-      costoTotal = fonsT1 + fonsT2;
+
+      let afiNubesTotal = usaNube ? (diasReq * 400) : 0;
+      let afiCitasTotal = diasT2 * 200;
+      let afiFaltanteRegalos = Math.max(0, AFINIDAD_MAX - afiAcumulada - afiNubesTotal - afiCitasTotal);
+      cantRegalos = afiBase > 0 ? Math.ceil(afiFaltanteRegalos / afiBase) : 0;
+      costoTotal = cantRegalos * costUnit;
     }
 
     const nubesTotalesUsadas = usaNube ? diasReq : 0;
@@ -1567,5 +1538,22 @@ function recalculateTab2() {
 function recalculate() {
   recalculateTab1();
   recalculateTab2();
+  simRecalcular();
+}
+
+// Funciones de reinicio independiente para los nuevos botones en el Simulador
+function resetSimUnconditional() {
+  const cartas = document.getElementById('sim-cartas-qty');
+  const boletos = document.getElementById('sim-boletos-qty');
+  if (cartas) cartas.value = '0';
+  if (boletos) boletos.value = '0';
+  simRecalcular();
+}
+
+function resetSimNormalGifts() {
+  [1, 2, 3].forEach(idx => {
+    const input = document.getElementById(`sim-gift-qty-${idx}`);
+    if (input) input.value = '0';
+  });
   simRecalcular();
 }

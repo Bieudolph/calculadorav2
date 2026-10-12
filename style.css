@@ -63,13 +63,14 @@ body:not(.dark-mode) {
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   background-color: var(--bg-color);
   color: var(--text-main);
   margin: 0;
   padding: 0;
   transition: background-color 0.3s, color 0.3s;
   overflow: hidden;
+  font-variant-numeric: tabular-nums;
 }
 
 /* --- ESTILOS ENCABEZADO DE PÁGINAS (STYLE NTEBUILD) --- */
@@ -228,6 +229,7 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
+  font-family: inherit;
 }
 
 .nav-sidebar-btn svg {
@@ -289,6 +291,7 @@ body.dark-mode #theme-toggle-btn .moon-icon { display: none; }
   justify-content: center;
   flex: 1;
   gap: 6px;
+  font-family: inherit;
 }
 
 .top-action-btn:hover {
@@ -724,6 +727,7 @@ select, input[type="text"], input[type="number"] {
   box-sizing: border-box;
   outline: none;
   transition: border-color 0.2s;
+  font-family: inherit;
 }
 
 select:disabled, input:disabled {
@@ -753,6 +757,7 @@ select:focus, input:focus {
   border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.2s;
+  font-family: inherit;
 }
 
 .nav-arrow-btn:hover {
@@ -955,6 +960,7 @@ select:focus, input:focus {
   transition: all 0.2s ease;
   box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
   z-index: 5;
+  font-family: inherit;
 }
 
 .save-btn-top:hover {
@@ -997,6 +1003,7 @@ select:focus, input:focus {
 .metric-row.total-cost-row .metric-value {
   font-size: 16px;
   color: #38bdf8;
+  font-weight: 700;
 }
 
 .highlight-box {
@@ -1290,6 +1297,7 @@ select:focus, input:focus {
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
+  font-family: inherit;
 }
 .delete-report-btn:hover {
   background: rgba(239, 68, 68, 0.25);
@@ -1315,6 +1323,7 @@ select:focus, input:focus {
   color: var(--accordion-summary-text);
   outline: none;
   transition: background-color 0.2s;
+  font-family: inherit;
 }
 
 .details-accordion summary:hover {
@@ -1440,27 +1449,30 @@ select:focus, input:focus {
   text-align: center;
 }
 
-/* --- SIMULADOR LAYOUT GENERAL (SIMETRÍA Y ALTURAS) --- */
+/* --- SIMULADOR LAYOUT GENERAL (SIMETRÍA Y ALTURAS PERFECTAS) --- */
 .sim-layout-container {
   display: grid;
-  grid-template-columns: 360px 480px 380px; 
+  grid-template-columns: 350px 480px 380px; 
   gap: 20px;
   justify-content: center; 
-  align-items: stretch; /* Fuerza a que los paneles laterales y centrales mantengan la misma línea superior e inferior */
+  align-items: stretch; /* Iguala la altura vertical exacta de los 3 paneles */
   width: 100%;
   box-sizing: border-box;
 }
 
-.sim-left-panel {
+.sim-left-panel,
+.sim-center-panel,
+.sim-right-panel {
   background-color: var(--item-card-bg);
   border: 1px solid var(--border-color);
   border-radius: 12px;
-  padding: 14px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  justify-content: space-between; /* Distribuye los elementos internos para igualar la altura con el centro */
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+  justify-content: space-between;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   box-sizing: border-box;
+  height: 100%;
 }
 
 .sim-avatar-sm {
@@ -1471,27 +1483,27 @@ select:focus, input:focus {
 
 .sim-outfit-viewer {
   width: 100%;
-  height: 420px; /* Ajustado para buscar simetría vertical con el bloque central de estadísticas/regalos */
+  height: 580px; /* <--- Altura fija estricta para el contenedor */
   background: var(--bg-color);
   border: 1px solid var(--border-color);
   border-radius: 10px;
-  overflow: hidden;
+  overflow: hidden; /* <--- Esto es vital: corta lo que sobresalga para que no deforme la tarjeta */
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: zoom-in;
   position: relative;
+  margin-bottom: 12px;
 }
 
 .sim-outfit-viewer img {
-  max-width: 100%;
+  max-width: 160%;
   max-height: 100%;
   object-fit: contain;
-  transition: transform 0.3s;
+  transition: transform 0.3s ease;
 }
 
 .sim-outfit-viewer img:hover {
-  transform: scale(1.02);
+  transform: scale(1.03);
 }
 
 .sim-outfit-controls {
@@ -1524,22 +1536,13 @@ select:focus, input:focus {
 }
 
 .sim-center-panel {
-  background-color: var(--item-card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between; 
-  gap: 8px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-  box-sizing: border-box;
+  gap: 10px;
 }
 
 .sim-metrics-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
 }
 
@@ -1547,7 +1550,7 @@ select:focus, input:focus {
   background: var(--highlight-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 8px;
+  padding: 10px;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -1562,7 +1565,7 @@ select:focus, input:focus {
 }
 
 .sim-metric-val {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 800;
   color: #38bdf8;
 }
@@ -1575,26 +1578,27 @@ select:focus, input:focus {
   background: var(--highlight-bg);
   border: 1px solid var(--border-color);
   border-radius: 10px;
-  padding: 8px 10px;
+  padding: 10px 12px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 8px;
 }
 
 .sim-gift-card-lg {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   background: var(--item-card-bg);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 6px 8px;
+  padding: 8px 10px;
   cursor: pointer;
-  transition: border-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .sim-gift-card-lg:hover {
   border-color: #2563eb;
+  transform: translateX(2px);
 }
 
 .sim-gift-card-lg img {
@@ -1633,51 +1637,51 @@ select:focus, input:focus {
 
 .sim-transfer-btn {
   width: 100%;
-  padding: 8px 14px;
-  background-color: var(--nav-btn-bg);
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
-  font-weight: 600;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.2), rgba(30, 64, 175, 0.3));
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  font-weight: 700;
   font-size: 13px;
   border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   text-align: center;
-  margin-top: 2px;
+  margin-top: 4px;
+  font-family: inherit;
+  letter-spacing: 0.5px;
 }
 
 .sim-transfer-btn:hover {
-  background-color: var(--nav-arrow-hover);
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
   border-color: #2563eb;
-  color: #38bdf8;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  transform: translateY(-1px);
 }
 
 .sim-right-panel {
-  background-color: var(--item-card-bg);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-  box-sizing: border-box;
+  align-self: start;
+  height: auto;
+  justify-content: flex-start;
 }
 
 .sim-table-header-title {
   text-align: center;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 1px;
-  padding-bottom: 6px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--border-color);
+  margin-bottom: 8px;
 }
 
 .sim-table-wrapper {
   width: 100%;
-  overflow-x: auto;
+  flex-grow: 1;
+  overflow-y: auto;
 }
 
 .sim-progress-table {
@@ -1689,13 +1693,16 @@ select:focus, input:focus {
 .sim-progress-table th {
   background-color: var(--table-header-bg);
   color: var(--table-header-color);
-  padding: 6px 8px;
+  padding: 8px 10px;
   text-align: center;
   font-weight: 700;
+  position: sticky;
+  top: 0;
+  z-index: 2;
 }
 
 .sim-progress-table td {
-  padding: 6px 8px;
+  padding: 8px 10px;
   border-bottom: 1px solid var(--border-color);
   text-align: center;
   color: var(--text-main);

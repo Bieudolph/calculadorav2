@@ -34,10 +34,10 @@ const COLOR_MAP = {
 const translations = {
   es: {
     tabInicio: "Inicio",
-    tabPersonajes: "Personajes",
+    tabPersonajes: "General",
     tabCalcular: "Calcular Afinidad",
     tabSimulador: "Simulador",
-    headerPersonajesTitle: "PERSONAJES",
+    headerPersonajesTitle: "GENERAL",
     headerPersonajesDesc: "Consulta la lista de personajes, sus bonos de afinidad desbloqueables y los requisitos de nivel para planificar tus recursos.",
     headerCalcularTitle: "CALCULAR AFINIDAD",
     headerCalcularDesc: "Calcula el tiempo estimado en días y el costo total en Fons según los regalos seleccionados, citas y nubes activadas.",
@@ -47,6 +47,7 @@ const translations = {
     subtituloInicio: "Usa la rueda del ratón o arrastra para explorar",
     bonoAfinidad: "Bono de afinidad nivel 10",
     outfit: "Outfit",
+    noOutfit: "No cuenta con traje de afinidad",
     itemLabel: "Item",
     affinityLabel: "Afinidad",
     icono: "[ Icono ]",
@@ -86,10 +87,10 @@ const translations = {
   },
   en: {
     tabInicio: "Home",
-    tabPersonajes: "Characters",
+    tabPersonajes: "General",
     tabCalcular: "Calculate Affection",
     tabSimulador: "Simulator",
-    headerPersonajesTitle: "CHARACTERS",
+    headerPersonajesTitle: "GENERAL",
     headerPersonajesDesc: "Browse character details, unlockable affection bonuses, and level requirements to plan your resources.",
     headerCalcularTitle: "CALCULATE AFFECTION",
     headerCalcularDesc: "Calculate estimated days and total Fons cost based on selected gifts, dates, and Fluffy Cottons.",
@@ -99,6 +100,7 @@ const translations = {
     subtituloInicio: "Use mouse wheel or drag to explore",
     bonoAfinidad: "Level 10 Affection Bonus",
     outfit: "Outfit",
+    noOutfit: "No affection outfit available",
     itemLabel: "Item",
     affinityLabel: "Affection",
     icono: "[ Icon ]",
@@ -667,7 +669,7 @@ function onCharacterChangeTab1(name) {
     if (outfitUrl) {
       outfitContainer.innerHTML = `<img src="${outfitUrl}" alt="Outfit" onclick="openModal('${outfitUrl}')">`;
     } else {
-      outfitContainer.innerHTML = `<span style="font-size:12px;">${translations[currentLang].outfit}</span>`;
+      outfitContainer.innerHTML = `<span style="font-size:12px; color:var(--text-muted); text-align:center; padding: 0 8px;">${translations[currentLang].noOutfit}</span>`;
     }
   }
 
@@ -1198,13 +1200,16 @@ function recalculateTab1() {
       container.innerHTML = `
         <div class="metric-row"><span class="metric-label">${t.affinityLabel}</span><span class="metric-value">${afiBase} <img src="${AFFINITY_ICON_URL}" class="affinity-icon" alt="Afinidad"></span></div>
         <div class="metric-row"><span class="metric-label">${t.precioUnidad}</span><span class="metric-value">${costUnit.toLocaleString('en-US')} <img src="${FONS_ICON_URL}" class="fons-icon" alt="Fons"></span></div>
+        
+        <div style="background-color: rgba(239, 68, 68, 0.15); border: 1px solid #fecaca; color: #ef4444; padding: 8px; border-radius: 6px; font-size: 11px; text-align: center; margin-bottom: 8px; font-weight: bold;">
+          ${t.sinCitaMsg}
+        </div>
+
         <div class="toggle-container-nube" onclick="toggleCardCheckbox('p1-nube${idx}', event)">
           <span>${t.usarNube}</span>
           <input type="checkbox" id="p1-nube${idx}" ${usaNube ? 'checked' : ''} onchange="onTab1CheckboxChange()" onclick="event.stopPropagation()">
         </div>
-        <div style="background-color: rgba(239, 68, 68, 0.15); border: 1px solid #fecaca; color: #ef4444; padding: 8px; border-radius: 6px; font-size: 11px; text-align: center; margin-top: 8px; font-weight: bold;">
-          ${t.sinCitaMsg}
-        </div>
+
         <div class="highlight-box">
           <div class="metric-row"><span class="metric-label">${t.diasFaltantes}</span><span class="metric-value">${diasReq}</span></div>
           ${usaNube ? `<div class="metric-row"><span class="metric-label">${t.nubesUsar}</span><span class="metric-value">${nubesTotalesUsadas}</span></div>` : ''}

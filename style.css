@@ -31,10 +31,10 @@
 }
 
 body:not(.dark-mode) {
-  --bg-color: #f8fafc;
+  --bg-color: #f1f5f9;
   --card-bg: #ffffff;
-  --sidebar-bg: #f1f5f9;
-  --border-color: rgba(0, 0, 0, 0.06);
+  --sidebar-bg: #ffffff;
+  --border-color: #cbd5e1;
   --text-main: #1e293b;
   --text-muted: #64748b;
   --accent-green-bg: #ecfdf5;
@@ -49,17 +49,43 @@ body:not(.dark-mode) {
   --table-header-bg: #475569;
   --table-header-color: #ffffff;
   --table-bg: #ffffff;
-  --highlight-bg: #f1f5f9;
+  --highlight-bg: #f8fafc;
   --badge-bg: #eff6ff;
   --badge-border: #bfdbfe;
   --badge-color: #1e40af;
   --nav-btn-bg: #e2e8f0;
-  --nav-arrow-bg: #f1f5f9;
+  --nav-arrow-bg: #f8fafc;
   --nav-arrow-hover: #cbd5e1;
   --accordion-bg: #ffffff;
   --accordion-summary-bg: #e2e8f0;
   --accordion-summary-hover: #cbd5e1;
   --accordion-summary-text: #334155;
+}
+
+/* Forzar que la tarjeta del carrusel sea SIEMPRE oscura en Tema Claro */
+body:not(.dark-mode) .dota-card {
+  background: #1a1d24 !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25) !important;
+}
+
+body:not(.dark-mode) .dota-card-header,
+body:not(.dark-mode) .dota-skills-container {
+  background: rgba(0, 0, 0, 0.2) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+body:not(.dark-mode) .dota-card-title {
+  color: #f1f5f9 !important;
+}
+
+body:not(.dark-mode) .dota-skill-slot {
+  background: #121418 !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+body:not(.dark-mode) .dota-card-img-container {
+  background: #121418 !important;
 }
 
 body {
@@ -1455,7 +1481,7 @@ select:focus, input:focus {
   grid-template-columns: 350px 480px 380px; 
   gap: 20px;
   justify-content: center; 
-  align-items: stretch; /* Iguala la altura vertical exacta de los 3 paneles */
+  align-items: stretch;
   width: 100%;
   box-sizing: border-box;
 }
@@ -1483,11 +1509,11 @@ select:focus, input:focus {
 
 .sim-outfit-viewer {
   width: 100%;
-  height: 580px; /* <--- Altura fija estricta para el contenedor */
+  height: 580px;
   background: var(--bg-color);
   border: 1px solid var(--border-color);
   border-radius: 10px;
-  overflow: hidden; /* <--- Esto es vital: corta lo que sobresalga para que no deforme la tarjeta */
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;

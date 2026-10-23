@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Calculadora de Afinidad v1.3.7</title>
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+
+  <div id="image-modal" onclick="closeModal()">
+    <img id="modal-img" src="" alt="Zoom">
+  </div>
+
+  <div class="app-layout">
+    <nav class="sidebar" id="appSidebar">
+      <div class="sidebar-top-content">
+        <div class="sidebar-header" style="display: flex; justify-content: space-between; align-items: center;">
+          <h1 class="sidebar-title">
+            Calculadora <span class="version-tag">v1.3.7</span>
+          </h1>
+          <button class="sidebar-toggle-btn" id="toggleSidebarBtn" title="Contraer / Expandir barra lateral">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg>
+          </button>
+        </div>
+
+        <div class="sidebar-menu">
+          <button class="nav-sidebar-btn active" onclick="switchTab('tab-inicio', this)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            <span data-i18n="tabInicio">Inicio</span>
+          </button>
+          <button class="nav-sidebar-btn" onclick="switchTab('tab-personaje', this)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            <span data-i18n="tabPersonajes">General</span>
+          </button>
+          <button class="nav-sidebar-btn" onclick="switchTab('tab-calcular', this)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            <span data-i18n="tabCalcular">Affinity Calculator</span>
+          </button>
+          <button class="nav-sidebar-btn" onclick="switchTab('tab-simulador', this)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 3 0 3 0"></path><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-3 0-3"></path></svg>
+            <span data-i18n="tabSimulador">Simulador</span> <span class="version-tag" style="font-size: 9px; padding: 1px 5px; margin-left: 6px; background-color: rgba(168, 85, 247, 0.15); color: #c084fc; border-color: rgba(168, 85, 247, 0.3);">BETA</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button class="top-action-btn" onclick="toggleLanguage()" title="Cambiar Idioma / Change Language" id="lang-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+          <span>EN</span>
+        </button>
+        <button class="top-action-btn" onclick="toggleTheme()" title="Cambiar tema claro/oscuro" id="theme-toggle-btn">
+          <svg class="sun-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          <svg class="moon-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+        </button>
+      </div>
+    </nav>
+
+    <main class="main-content">
+      
+      <!-- PESTAÑA 0: INICIO -->
+      <div id="tab-inicio" class="tab-content active">
+        <div class="dota-home-container">
+          <div class="dota-title-group">
+            <h2 class="dota-home-title" data-i18n="seleccionarEsper">Seleccionar Esper</h2>
+            <span class="dota-home-subtitle" data-i18n="subtituloInicio">Usa la rueda del ratón o arrastra para explorar</span>
+          </div>
+          <div class="dota-carousel-wrapper">
+            <button class="carousel-nav-arrow carousel-prev-btn" onclick="scrollCarouselManual(-1)" title="Anterior">‹</button>
+            <div class="dota-carousel" id="dotaCarousel"></div>
+            <button class="carousel-nav-arrow carousel-next-btn" onclick="scrollCarouselManual(1)" title="Siguiente">›</button>
+            <div class="dota-footer-action">
+              <button class="btn-random">RANDOM ESPER</button>
+              <button class="btn-lockin" id="btnLockIn">LOCK IN</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PESTAÑA 1: PERSONAJES -->
+      <div id="tab-personaje" class="tab-content">
+        <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h1 class="page-title" data-i18n="headerPersonajesTitle">GENERAL</h1>
+            <p class="page-description" data-i18n="headerPersonajesDesc">
+              Consulta la lista de personajes, sus bonos de afinidad desbloqueables y los requisitos de nivel para planificar tus recursos.
+            </p>
+          </div>
+          <div class="zero-skill-container" id="zero-skill-tab1">
+            <button type="button" class="zero-label-btn" onclick="toggleZeroSkillTab(1)" data-i18n="urbanSkill">Habilidad Urbana</button>
+            <div class="zero-buttons-group">
+              <button type="button" class="zero-num-btn" onclick="setZeroSkillLevel(1, 1)">1</button>
+              <button type="button" class="zero-num-btn" onclick="setZeroSkillLevel(1, 2)">2</button>
+              <button type="button" class="zero-num-btn" onclick="setZeroSkillLevel(1, 3)">3</button>
+              <button type="button" class="zero-num-btn" onclick="setZeroSkillLevel(1, 4)">4</button>
+              <button type="button" class="zero-num-btn" onclick="setZeroSkillLevel(1, 5)">5</button>
+            </div>
+          </div>
+          <hr class="header-divider" style="width: 100%;">
+        </div>
+
+        <div class="grid-container">
+          <div class="profile-card">
+            <div class="character-nav-wrapper">
+              <button type="button" class="nav-arrow-btn" onclick="cambiarPersonajeConFlechaTab1(-1)">&lt;</button>
+              <select id="select-chara-1" onchange="onCharacterChangeTab1(this.value)"></select>
+              <button type="button" class="nav-arrow-btn" onclick="cambiarPersonajeConFlechaTab1(1)">&gt;</button>
+            </div>
+            
+            <div class="avatar-container" id="p1-avatar-container">
+              <span style="font-size:12px;" data-i18n="avatar">[ Avatar ]</span>
+            </div>
+            
+            <div class="section-title" data-i18n="bonoAfinidad">Bono de afinidad nivel 10</div>
+            <div class="badge-bonus" id="p1-bonus">Bonus: -</div>
+            
+            <div class="section-title" id="p1-outfit-name" style="margin-top: 6px;" data-i18n="outfit">Outfit</div>
+            <div class="outfit-container" id="p1-outfit-container">
+              <span style="font-size:12px; color:var(--text-muted); text-align:center; padding: 0 8px;" data-i18n="noOutfit">No cuenta con traje de afinidad</span>
+            </div>
+          </div>
+
+          <div class="item-column">
+            <div class="item-header" id="p1-item1-name">Item 1</div>
+            <div class="item-img-placeholder" id="p1-itemimg-1-container">
+              <span data-i18n="icono">[ Icono ]</span>
+            </div>
+            <div id="p1-tables-container-1"></div>
+          </div>
+
+          <div class="item-column">
+            <div class="item-header" id="p1-item2-name">Item 2</div>
+            <div class="item-img-placeholder" id="p1-itemimg-2-container">
+              <span data-i18n="icono">[ Icono ]</span>
+            </div>
+            <div id="p1-tables-container-2"></div>
+          </div>
+
+          <div class="item-column">
+            <div class="item-header" id="p1-item3-name">Item 3</div>
+            <div class="item-img-placeholder" id="p1-itemimg-3-container">
+              <span data-i18n="icono">[ Icono ]</span>
+            </div>
+            <div id="p1-tables-container-3"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PESTAÑA 2: CALCULAR AFINIDAD -->
+      <div id="tab-calcular" class="tab-content">
+        <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h1 class="page-title" data-i18n="headerCalcularTitle">CALCULAR AFINIDAD</h1>
+            <p class="page-description" data-i18n="headerCalcularDesc">
+              Calcula el tiempo estimado en días y el costo total en Fons según los regalos seleccionados, citas y nubes activadas.
+            </p>
+          </div>
+          <div class="zero-skill-container" id="zero-skill-tab2">
+            <button type="button" class="zero-label-btn" onclick="toggleZeroSkillTab(2)" data-i18n="urbanSkill">Habilidad Urbana</button>
+            <div class="zero-buttons-group">
+              <button type="button" class="zero-num-btn" onclick="setZeroSkillLevel(2, 1)">1</button>
+              <button type="button" class="zero-num-btn" onclick="setZeroSkillLevel(2, 2)">2</button>
+              <button type="button" class="zero-num-btn" onclick="setZeroSkillLevel(2, 3)">3</button>
+              <button type="button" class="zero-num-btn" onclick="setZeroSkillLevel(2, 4)">4</button>
+              <button type="button" class="zero-num-btn" onclick="setZeroSkillLevel(2, 5)">5</button>
+            </div>
+          </div>
+          <hr class="header-divider" style="width: 100%;">
+        </div>
+
+        <div class="calc-layout-master">
+          <div class="calc-sidebar-panel">
+            <div class="profile-card" style="width: 100%; border: none; box-shadow: none; padding: 0; background: transparent;">
+              <div class="avatar-container" id="p2-avatar-container">
+                <span style="font-size:12px;" data-i18n="avatar">[ Avatar ]</span>
+              </div>
+
+              <div class="character-nav-wrapper" style="margin-top: 12px;">
+                <button type="button" class="nav-arrow-btn" onclick="cambiarPersonajeConFlechaTab2(-1)">&lt;</button>
+                <select id="select-chara-2" onchange="onCharacterChangeTab2(this.value)"></select>
+                <button type="button" class="nav-arrow-btn" onclick="cambiarPersonajeConFlechaTab2(1)">&gt;</button>
+              </div>
+              
+              <div class="sparkline-wrapper">
+                <div class="sparkline-container">
+                  <div id="sparkline-bar" class="sparkline-bar"></div>
+                  <div id="p2-progress-text" class="sparkline-text">0 / 56,000</div>
+                </div>
+              </div>
+
+              <div style="width:100%; margin-top:10px;">
+                <label style="font-size:12px; font-weight:700; color:var(--text-muted);" data-i18n="necesita">Se necesita</label>
+                <input type="text" id="p2-necesita" value="56,100" readonly style="font-weight:bold; margin-top:4px;">
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                  <label style="font-size:12px; font-weight:700; color:var(--text-muted);" data-i18n="nivel">Nivel</label>
+                  <button type="button" onclick="resetPerfilTab2()" title="Reiniciar nivel y afinidad" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 2px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                  </button>
+                </div>
+                <div class="select-wrapper" id="level-select-container">
+                  <select id="p2-nivel" onchange="onNivelChangeTab2()" style="margin-top:4px;">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10" hidden>10</option>
+                  </select>
+                </div>
+
+                <label style="font-size:12px; margin-top:10px; display:block; font-weight:700; color:var(--text-muted);" data-i18n="ingreseAfinidad">Ingrese su afinidad actual</label>
+                <div class="input-lock-wrapper" id="affinity-input-container">
+                  <input type="text" id="p2-afiactual" value="0" oninput="formatAndValidateAffinity(this);" style="margin-top:4px;">
+                </div>
+              </div>
+
+              <div class="sim-gifts-box" style="width:100%; margin-top:12px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <div class="section-title" style="margin:0;" data-i18n="regalosSinCondicion">REGALOS SIN CONDICIÓN</div>
+                  <button type="button" onclick="reiniciarRegalosTab2()" title="Reiniciar regalos a 0" style="background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 2px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path></svg>
+                  </button>
+                </div>
+                
+                <div class="sim-gift-card-lg" onclick="openModal(CARD_WRITE_IMG_URL)">
+                  <img src="https://lh3.googleusercontent.com/d/1C9x-jmc4PuFCqtxZh8xinbZj-oTKR6TX" alt="Carta">
+                  <div class="sim-gift-info">
+                    <span class="sim-gift-name" data-i18n="cartaEscritaMano">Carta escrita a mano</span>
+                    <span class="sim-gift-val" id="p2-carta-sublabel"><img src="https://lh3.googleusercontent.com/d/16Yzy8DsFN4jdaacXLffYAI3MnZAxmmmT" class="affinity-icon" alt="Affinity"> +2,000</span>
+                  </div>
+                  <div class="sim-gift-input-wrap" onclick="event.stopPropagation()">
+                    <input type="number" id="p2-cartas-qty" value="0" min="0" oninput="recalculateTab2()">
+                  </div>
+                </div>
+
+                <div class="sim-gift-card-lg" onclick="openModal(MOVIE_TICKET_IMG_URL)">
+                  <img src="https://lh3.googleusercontent.com/d/14PzrxqsRtv8vZU3cnme0eC2d40PinhVr" alt="Boleto">
+                  <div class="sim-gift-info">
+                    <span class="sim-gift-name" data-i18n="boletoCineFloe">Boleto del cine Floe</span>
+                    <span class="sim-gift-val" id="p2-boleto-sublabel"><img src="https://lh3.googleusercontent.com/d/16Yzy8DsFN4jdaacXLffYAI3MnZAxmmmT" class="affinity-icon" alt="Affinity"> +400</span>
+                  </div>
+                  <div class="sim-gift-input-wrap" onclick="event.stopPropagation()">
+                    <input type="number" id="p2-boletos-qty" value="0" min="0" oninput="recalculateTab2()">
+                  </div>
+                </div>
+
+                <button type="button" class="sim-transfer-btn" onclick="aplicarRegalosTab2()" style="margin-top: 10px; width: 100%; padding: 8px; font-size: 12px;" data-i18n="aplicarRegalos">✓ Aplicar regalos al perfil</button>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="calc-main-panel">
+            <div class="calc-items-grid">
+              
+              <div class="item-column">
+                <button class="save-btn-top" onclick="guardarEnReporte(1, event)" title="Añadir al reporte">+</button>
+                <div class="item-header" style="font-size:22px; color:#38bdf8;" id="p2-afi1-head"><img src="https://lh3.googleusercontent.com/d/16Yzy8DsFN4jdaacXLffYAI3MnZAxmmmT" class="affinity-icon" alt="Affinity"> 400</div>
+                <div class="item-img-placeholder" id="p2-itemimg-1-container" style="margin-top: 8px;">
+                  <span data-i18n="icono">[ Icono ]</span>
+                </div>
+                <div style="text-align:center; font-weight:bold; margin-bottom:12px;" id="p2-item1-name">Item 1</div>
+                
+                <div class="metric-row"><span class="metric-label" data-i18n="cantRegalos">Cantidad de regalos</span><span class="metric-value" id="p2-cant1">0</span></div>
+                <div class="metric-row"><span class="metric-label" data-i18n="diasFaltantes">Días faltantes</span><span class="metric-value" id="p2-dias1">0</span></div>
+                <div class="metric-row"><span class="metric-label" data-i18n="precioUnidad">Precio por unidad</span><span class="metric-value" id="p2-cost1">0</span></div>
+                <div class="metric-row total-cost-row"><span class="metric-label" data-i18n="costoTotalFons">Costo total de Fons</span><span class="metric-value" id="p2-costototal1">0</span></div>
+                <div class="metric-row"><span class="metric-label" data-i18n="nubesUsar">Nubes a usar</span><span class="metric-value" id="p2-nubesusadas1">0</span></div>
+                
+                <div class="toggle-container" onclick="toggleCardCheckbox('p2-cita1', event)">
+                  <span data-i18n="cita">¿Cita?</span>
+                  <input type="checkbox" id="p2-cita1" checked onchange="onTab2CheckboxChange()" onclick="event.stopPropagation()">
+                </div>
+                <div class="toggle-container-nube" onclick="toggleCardCheckbox('p2-nube1', event)">
+                  <span data-i18n="usarNube">☁ Usar nube del mueble</span>
+                  <input type="checkbox" id="p2-nube1" onchange="onTab2CheckboxChange()" onclick="event.stopPropagation()">
+                </div>
+              </div>
+
+              <div class="item-column">
+                <button class="save-btn-top" onclick="guardarEnReporte(2, event)" title="Añadir al reporte">+</button>
+                <div class="item-header" style="font-size:22px; color:#38bdf8;" id="p2-afi2-head"><img src="https://lh3.googleusercontent.com/d/16Yzy8DsFN4jdaacXLffYAI3MnZAxmmmT" class="affinity-icon" alt="Affinity"> 200</div>
+                <div class="item-img-placeholder" id="p2-itemimg-2-container" style="margin-top: 8px;">
+                  <span data-i18n="icono">[ Icono ]</span>
+                </div>
+                <div style="text-align:center; font-weight:bold; margin-bottom:12px;" id="p2-item2-name">Item 2</div>
+                
+                <div class="metric-row"><span class="metric-label" data-i18n="cantRegalos">Cantidad de regalos</span><span class="metric-value" id="p2-cant2">0</span></div>
+                <div class="metric-row"><span class="metric-label" data-i18n="diasFaltantes">Días faltantes</span><span class="metric-value" id="p2-dias2">0</span></div>
+                <div class="metric-row"><span class="metric-label" data-i18n="precioUnidad">Precio por unidad</span><span class="metric-value" id="p2-cost2">0</span></div>
+                <div class="metric-row total-cost-row"><span class="metric-label" data-i18n="costoTotalFons">Costo total de Fons</span><span class="metric-value" id="p2-costototal2">0</span></div>
+                <div class="metric-row"><span class="metric-label" data-i18n="nubesUsar">Nubes a usar</span><span class="metric-value" id="p2-nubesusadas2">0</span></div>
+                
+                <div class="toggle-container" onclick="toggleCardCheckbox('p2-cita2', event)">
+                  <span data-i18n="cita">¿Cita?</span>
+                  <input type="checkbox" id="p2-cita2" checked onchange="onTab2CheckboxChange()" onclick="event.stopPropagation()">
+                </div>
+                <div class="toggle-container-nube" onclick="toggleCardCheckbox('p2-nube2', event)">
+                  <span data-i18n="usarNube">☁️ Usar nube del mueble</span>
+                  <input type="checkbox" id="p2-nube2" onchange="onTab2CheckboxChange()" onclick="event.stopPropagation()">
+                </div>
+              </div>
+
+              <div class="item-column">
+                <button class="save-btn-top" onclick="guardarEnReporte(3, event)" title="Añadir al reporte">+</button>
+                <div class="item-header" style="font-size:22px; color:#38bdf8;" id="p2-afi3-head"><img src="https://lh3.googleusercontent.com/d/16Yzy8DsFN4jdaacXLffYAI3MnZAxmmmT" class="affinity-icon" alt="Affinity"> 100</div>
+                <div class="item-img-placeholder" id="p2-itemimg-3-container" style="margin-top: 8px;">
+                  <span data-i18n="icono">[ Icono ]</span>
+                </div>
+                <div style="text-align:center; font-weight:bold; margin-bottom:12px;" id="p2-item3-name">Item 3</div>
+                
+                <div class="metric-row"><span class="metric-label" data-i18n="cantRegalos">Cantidad de regalos</span><span class="metric-value" id="p2-cant3">0</span></div>
+                <div class="metric-row"><span class="metric-label" data-i18n="diasFaltantes">Días faltantes</span><span class="metric-value" id="p2-dias3">0</span></div>
+                <div class="metric-row"><span class="metric-label" data-i18n="precioUnidad">Precio por unidad</span><span class="metric-value" id="p2-cost3">0</span></div>
+                <div class="metric-row total-cost-row"><span class="metric-label" data-i18n="costoTotalFons">Costo total de Fons</span><span class="metric-value" id="p2-costototal3">0</span></div>
+                <div class="metric-row"><span class="metric-label" data-i18n="nubesUsar">Nubes a usar</span><span class="metric-value" id="p2-nubesusadas3">0</span></div>
+                
+                <div class="toggle-container" onclick="toggleCardCheckbox('p2-cita3', event)">
+                  <span data-i18n="cita">¿Cita?</span>
+                  <input type="checkbox" id="p2-cita3" checked onchange="onTab2CheckboxChange()" onclick="event.stopPropagation()">
+                </div>
+                <div class="toggle-container-nube" onclick="toggleCardCheckbox('p2-nube3', event)">
+                  <span data-i18n="usarNube">☁️ Usar nube del mueble</span>
+                  <input type="checkbox" id="p2-nube3" onchange="onTab2CheckboxChange()" onclick="event.stopPropagation()">
+                </div>
+              </div>
+
+            </div>
+
+            <div class="calc-report-wrapper">
+              <div class="report-section-title">
+                <span data-i18n="reporteTitulo">Reporte de Recursos Guardados</span>
+                <div style="display: flex; gap: 8px;">
+                  <button class="top-action-btn" onclick="exportReportToPNG()" style="font-size: 12px; padding: 4px 10px; background: #f59e0b; color: #0f172a; border-color: #d97706;" data-i18n="exportarPng">📥 Descargar PNG</button>
+                  <button class="top-action-btn" onclick="limpiarReporte()" style="font-size: 12px; padding: 4px 10px;" data-i18n="limpiarReporte">Limpiar todo</button>
+                </div>
+              </div>
+              <div id="reporte-lista-container"></div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PESTAÑA 3: SIMULADOR -->
+      <div id="tab-simulador" class="tab-content">
+        <div class="page-header" style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h1 class="page-title" data-i18n="headerSimuladorTitle">SIMULADOR</h1>
+            <p class="page-description" data-i18n="headerSimuladorDesc">
+              Simula la progresión de nivel de cada personaje, ajusta la cantidad de regalos entregados y envía los datos directamente al calculador.
+            </p>
+          </div>
+          <div class="zero-skill-container" id="zero-skill-tab3">
+            <button type="button" class="zero-label-btn" onclick="toggleZeroSkillTab(3)" data-i18n="urbanSkill">Habilidad Urbana</button>
+            <div class="zero-buttons-group">
+              <button type="button" class="zero-num-btn" onclick="setZeroSkillLevel(3, 1)">1</button>
+              <button type="button" class="zero-num-btn" onclick="setZeroSkillLevel(3, 2)">2</button>
+              <button type="button" class="zero-num-btn" onclick="setZeroSkillLevel(3, 3)">3</button>
+              <button type="button" class="zero-num-btn" onclick="setZeroSkillLevel(3, 4)">4</button>
+              <button type="button" class="zero-num-btn" onclick="setZeroSkillLevel(3, 5)">5</button>
+            </div>
+          </div>
+          <hr class="header-divider" style="width: 100%;">
+        </div>
+
+        <div class="sim-grid-layout">
+          
+          <!-- BLOQUE 1: PERSONAJE -->
+          <div class="sim-block-character">
+            <div class="sim-outfit-viewer" id="sim-outfit-viewer-container" style="position: relative;">
+              <img id="sim-outfit-img" src="" alt="Outfit" style="width: 100%; height: 100%; object-fit: contain; cursor: pointer;" onclick="openModal(this.src)">
+              
+              <button type="button" class="sim-skin-nav-btn sim-skin-prev" onclick="cambiarSkinSimulador(-1)" title="Skin anterior">‹</button>
+              <button type="button" class="sim-skin-nav-btn sim-skin-next" onclick="cambiarSkinSimulador(1)" title="Siguiente skin">›</button>
+
+              <div class="sim-outfit-name-box" id="sim-outfit-name-label">Outfit</div>
+            </div>
+          </div>
+
+          <!-- BLOQUE 2: PANEL CENTRAL -->
+          <div class="sim-block-main">
+            
+            <!-- CAJA 1: CABECERA -->
+            <div class="sim-inner-box sim-box-header">
+              <div class="sim-chara-info-box">
+                <h2 id="sim-chara-name" class="sim-chara-title">Fadia</h2>
+                <div class="sim-chara-tag-box" id="sim-chara-tag-container">
+                  <span id="sim-chara-tag" class="sim-chara-sub">Miembro de UAC-2</span>
+                </div>
+              </div>
+              <div class="sim-level-circle-container">
+                <span class="sim-level-label" data-i18n="affinityLabelUpper">Afinidad</span>
+                <div class="sim-circle-wrapper">
+                  <svg class="sim-progress-ring" width="70" height="70">
+                    <circle class="ring-bg" cx="35" cy="35" r="28" stroke-width="5"></circle>
+                    <circle class="ring-fill" id="sim-circle-fill" cx="35" cy="35" r="28" stroke-width="5"></circle>
+                  </svg>
+                  <div class="sim-level-inner">
+                    <span id="sim-level-badge">1</span>
+                  </div>
+                </div>
+                <span class="sim-exp-sub" id="sim-exp-sub">0 / 100</span>
+              </div>
+            </div>
+
+            <!-- CAJA CONTENEDORA GRIS INTERMEDIA -->
+            <div class="sim-inner-box sim-box-mid-container">
+              
+              <!-- CONTENEDOR 1: FAVORITOS -->
+              <div class="sim-sub-box">
+                <div class="sim-pink-bar" data-i18n="favoritosTitle">FAVORITOS</div>
+                <div class="sim-fav-slots-row">
+                  <div class="sim-slot-display"><img src="https://lh3.googleusercontent.com/d/1C9x-jmc4PuFCqtxZh8xinbZj-oTKR6TX" alt="Carta"></div>
+                  <div class="sim-slot-display"><img src="https://lh3.googleusercontent.com/d/14PzrxqsRtv8vZU3cnme0eC2d40PinhVr" alt="Boleto"></div>
+                  <div class="sim-slot-display"><img id="sim-fav-gift-img-1" src="" alt="Fav 1"></div>
+                  <div class="sim-slot-display"><img id="sim-fav-gift-img-2" src="" alt="Fav 2"></div>
+                  <div class="sim-slot-display"><img id="sim-fav-gift-img-3" src="" alt="Fav 3"></div>
+                </div>
+              </div>
+
+              <!-- CONTENEDOR 2: INVENTARIO -->
+              <div class="sim-sub-box">
+                <div class="sim-pink-bar" style="background-color: #3b82f6;" data-i18n="inventarioTitle">INVENTARIO / REGALOS FALTANTES</div>
+                <div class="sim-inv-grid">
+                  <div class="sim-slot-card">
+                    <div class="sim-card-img-wrap">
+                      <img src="https://lh3.googleusercontent.com/d/1C9x-jmc4PuFCqtxZh8xinbZj-oTKR6TX" alt="Carta">
+                      <input type="number" id="sim-inv-cartas-qty" value="0" min="0" oninput="simRecalcular()">
+                    </div>
+                    <div class="sim-affinity-footer" id="sim-inv-cartas-val"><img src="https://lh3.googleusercontent.com/d/16Yzy8DsFN4jdaacXLffYAI3MnZAxmmmT" class="affinity-icon" alt="Affinity"> 2000</div>
+                  </div>
+
+                  <div class="sim-slot-card">
+                    <div class="sim-card-img-wrap">
+                      <img src="https://lh3.googleusercontent.com/d/14PzrxqsRtv8vZU3cnme0eC2d40PinhVr" alt="Boleto">
+                      <input type="number" id="sim-inv-boletos-qty" value="0" min="0" oninput="simRecalcular()">
+                    </div>
+                    <div class="sim-affinity-footer" id="sim-inv-boletos-val"><img src="https://lh3.googleusercontent.com/d/16Yzy8DsFN4jdaacXLffYAI3MnZAxmmmT" class="affinity-icon" alt="Affinity"> 400</div>
+                  </div>
+
+                  <div class="sim-slot-card">
+                    <div class="sim-card-img-wrap">
+                      <img id="sim-inv-gift-img-1" src="" alt="Gift 1">
+                      <input type="number" id="sim-inv-gift-qty-1" value="0" min="0" oninput="simRecalcular()">
+                    </div>
+                    <div class="sim-affinity-footer" id="sim-inv-gift-val-1"><img src="https://lh3.googleusercontent.com/d/16Yzy8DsFN4jdaacXLffYAI3MnZAxmmmT" class="affinity-icon" alt="Affinity"> 400</div>
+                  </div>
+
+                  <div class="sim-slot-card">
+                    <div class="sim-card-img-wrap">
+                      <img id="sim-inv-gift-img-2" src="" alt="Gift 2">
+                      <input type="number" id="sim-inv-gift-qty-2" value="0" min="0" oninput="simRecalcular()">
+                    </div>
+                    <div class="sim-affinity-footer" id="sim-inv-gift-val-2"><img src="https://lh3.googleusercontent.com/d/16Yzy8DsFN4jdaacXLffYAI3MnZAxmmmT" class="affinity-icon" alt="Affinity"> 200</div>
+                  </div>
+
+                  <div class="sim-slot-card active-selection">
+                    <div class="sim-card-img-wrap">
+                      <img id="sim-inv-gift-img-3" src="" alt="Gift 3">
+                      <input type="number" id="sim-inv-gift-qty-3" value="0" min="0" oninput="simRecalcular()">
+                    </div>
+                    <div class="sim-affinity-footer" id="sim-inv-gift-val-3"><img src="https://lh3.googleusercontent.com/d/16Yzy8DsFN4jdaacXLffYAI3MnZAxmmmT" class="affinity-icon" alt="Affinity"> 100</div>
+                  </div>
+
+                  <div class="sim-slot-card">
+                    <div class="sim-card-img-wrap">
+                      <img id="sim-inv-gift-img-4" src="https://lh3.googleusercontent.com/d/1dqQm82jdyCUIBGBTSEcaZVMZ4TMOuKPl" alt="Nuevo 1">
+                      <input type="number" id="sim-inv-gift-qty-4" value="0" min="0" oninput="simRecalcular()">
+                    </div>
+                    <div class="sim-affinity-footer" id="sim-inv-gift-val-4"><img src="https://lh3.googleusercontent.com/d/16Yzy8DsFN4jdaacXLffYAI3MnZAxmmmT" class="affinity-icon" alt="Affinity"> 400</div>
+                  </div>
+
+                  <div class="sim-slot-card">
+                    <div class="sim-card-img-wrap">
+                      <img id="sim-inv-gift-img-5" src="https://lh3.googleusercontent.com/d/1kggvA_cInSaqtsSJOLKUZgoGuoplaifp" alt="Nuevo 2">
+                      <input type="number" id="sim-inv-gift-qty-5" value="0" min="0" oninput="simRecalcular()">
+                    </div>
+                    <div class="sim-affinity-footer" id="sim-inv-gift-val-5"><img src="https://lh3.googleusercontent.com/d/16Yzy8DsFN4jdaacXLffYAI3MnZAxmmmT" class="affinity-icon" alt="Affinity"> 400</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- CAJA 4: FOOTER / ACCIONES (CON ESTADO INICIAL INTEGRADO) -->
+            <div class="sim-inner-box sim-box-footer">
+              <div class="sim-bond-logo">BOND</div>
+              
+              <!-- SELECTOR DE NIVEL E INGRESO DE AFINIDAD ACTUAL COMPACTOS -->
+              <div class="sim-initial-state-container">
+                <div class="sim-init-field">
+                  <label for="sim-init-level" data-i18n="levelLabelShort">Nivel</label>
+                  <select id="sim-init-level" onchange="simRecalcular()">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                  </select>
+                </div>
+                <div class="sim-init-field">
+                  <label for="sim-init-affinity" data-i18n="affinityLabelShort">Afinidad</label>
+                  <input type="text" id="sim-init-affinity" value="0" oninput="formatAndValidateSimAffinity(this)">
+                </div>
+              </div>
+
+              <!-- BOTONES DE ACCIÓN (RESETEAR SVG + ENVIAR DATOS) -->
+              <div class="sim-footer-buttons">
+                <button type="button" class="sim-btn-reset-icon" onclick="simResetAll()" title="Resetear">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                    <path d="M3 3v5h5"></path>
+                  </svg>
+                </button>
+                <button type="button" class="sim-btn-submit" onclick="simEnviarDatos()" data-i18n="enviarACalcular">Enviar datos</button>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- BLOQUE 4: CARRUSEL VERTICAL -->
+          <div class="sim-block-carousel-vertical" id="sim-vertical-espers"></div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <div class="footer">
+    Calculadora de Afinidad v1.3.2 • Desarrollo en beta 
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

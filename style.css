@@ -2134,9 +2134,6 @@ select:focus, input:focus {
   box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
 }
 
-/* ==========================================================================
-   AJUSTES DE ADAPTABILIDAD Y LEGIBILIDAD PARA EL MODO CLARO Y CONTROLES SIM
-   ========================================================================== */
 .sim-init-field select,
 .sim-init-field input {
   color: var(--input-text) !important;
@@ -2146,4 +2143,14 @@ select:focus, input:focus {
 
 .sim-init-field input::placeholder {
   color: var(--text-muted) !important;
+}
+
+/* Bloque de cita / duelo bloqueado por nivel (estilo gris) */
+.toggle-container.locked-cita {
+  background-color: rgba(148, 163, 184, 0.1);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #94a3b8;
+  cursor: not-allowed;
+  justify-content: space-between;
+  align-items: center;
 }

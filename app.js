@@ -1,7 +1,5 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw4o42FhIcR4mcGG1chHjHDjBu0IMTqyeCsUMrC-XHM_tdfp_QyfzQuZ1p-su4qMjksAA/exec';
 
-const ZERO_SKILL_NAME = "Habilidad Urbana";
-
 let charactersData = [];
 let selectedCharaTab1 = null;
 let selectedCharaTab2 = null;
@@ -10,12 +8,36 @@ let reporteGuardado = [];
 let lastUserSelectedLevelTab2 = 1;
 
 let characterSkinState = {};
+try {
+  const savedSkinState = localStorage.getItem('characterSkinState');
+  if (savedSkinState) characterSkinState = JSON.parse(savedSkinState);
+} catch(e) { characterSkinState = {}; }
 
 let zeroSkillState = {
   1: 0,
   2: 0,
   3: 0
 };
+try {
+  const savedZeroState = localStorage.getItem('zeroSkillState');
+  if (savedZeroState) zeroSkillState = JSON.parse(savedZeroState);
+} catch(e) {}
+
+let tab2UserState = {};
+try {
+  const savedTab2 = localStorage.getItem('tab2UserState');
+  if (savedTab2) tab2UserState = JSON.parse(savedTab2);
+} catch(e) {}
+
+let simUserState = {};
+try {
+  const savedSim = localStorage.getItem('simUserState');
+  if (savedSim) simUserState = JSON.parse(savedSim);
+} catch(e) {}
+
+let lastSelectedTab1 = localStorage.getItem('lastSelectedTab1') || '';
+let lastSelectedTab2 = localStorage.getItem('lastSelectedTab2') || '';
+let lastSelectedSim = localStorage.getItem('lastSelectedSim') || '';
 
 const FONS_ICON_URL = 'https://lh3.googleusercontent.com/d/1eFSFZPncsRkZU-yORmU10zoxF5zwjt7T';
 const AFFINITY_ICON_URL = 'https://lh3.googleusercontent.com/d/16Yzy8DsFN4jdaacXLffYAI3MnZAxmmmT';
@@ -48,25 +70,28 @@ const translations = {
   es: {
     tabInicio: "Inicio",
     tabPersonajes: "General",
-    tabCalcular: "Affinity Calculator",
+    tabCalcular: "Calcular Afinidad",
     tabSimulador: "Simulador",
     headerPersonajesTitle: "GENERAL",
-    headerPersonajesDesc: "Consulta la lista de personajes, sus bonos de afinidad desbloqueables y los requisitos de nivel para planificar tus recursos.",
+    headerPersonajesDesc: "Consulta los regalos favoritos de cada personaje para planificar tus recursos. Los cálculos de esta pestaña están considerados para llevar la afinidad de nivel 1 al nivel 10.",
     headerCalcularTitle: "CALCULAR AFINIDAD",
-    headerCalcularDesc: "Calcula el tiempo estimado en días y el costo total en Fons según los regalos seleccionados, citas y nubes activadas.",
+    headerCalcularDesc: "Calcula cuántos regalos, nubes y citas te tomará de acuerdo a tu nivel actual de afinidad ingresada.",
     headerSimuladorTitle: "SIMULADOR",
-    headerSimuladorDesc: "Simula la progresión de nivel de cada personaje, ajusta la cantidad de regalos entregados y envía los datos directamente al calculador.",
+    headerSimuladorDesc: "Simula la progresión de nivel de cualquier personaje de manera dinámica ajustando la cantidad de regalos a tu criterio. Puedes hacerlo de 1 al 10 o ingresando tu afinidad actual en la parte inferior.",
     seleccionarEsper: "Seleccionar Esper",
     subtituloInicio: "Usa la rueda del ratón o arrastra para explorar",
     bonoAfinidad: "Bono de afinidad nivel 10",
+    bonoObsesion: "Bono de obsesión nivel 10",
     outfit: "Outfit",
     noOutfit: "No cuenta con traje de afinidad",
     itemLabel: "Item",
     affinityLabel: "Afinidad",
     icono: "[ Icono ]",
     avatar: "[ Avatar ]",
-    necesita: "Se necesita",
+    necesita: "Afinidad faltante para nivel 10",
+    necesitaObsesion: "Obsesión faltante para nivel 10",
     ingreseAfinidad: "Ingrese su afinidad actual",
+    ingreseObsesion: "Ingrese su obsesión actual",
     nivel: "Nivel",
     cantRegalos: "Cantidad de regalos",
     diasFaltantes: "Días faltantes",
@@ -75,6 +100,7 @@ const translations = {
     nubesUsar: "Nubes a usar",
     cita: "¿Cita?",
     contarCita: "¿Contar cita?",
+    contarDuelo: "¿Contar duelo?",
     usarNube: "Usar nube del mueble",
     sinCitaMsg: "Este personaje no cuenta con sistema de citas",
     reporteTitulo: "Reporte de Recursos Guardados",
@@ -86,7 +112,7 @@ const translations = {
     datesUsedText: "Cita restantes:",
     cloudsUsedText: "Nubes faltantes:",
     daysRemainingText: "Días restantes:",
-    regalosSinCondicion: "Regalos sin condición",
+    regalosSinCondicion: "Regalos ilimitados",
     cartaEscritaMano: "Carta escrita a mano",
     boletoCineFloe: "Boleto del cine Floe",
     enviarACalcular: "Enviar datos",
@@ -104,7 +130,9 @@ const translations = {
     affectionLabelText: "Afinidad",
     affinityLabelUpper: "AFINIDAD",
     levelLabelShort: "NIVEL",
-    affinityLabelShort: "AFINIDAD"
+    affinityLabelShort: "AFINIDAD",
+    obsessionLabel: "Obsesión",
+    obsessionLabelUpper: "OBSESIÓN"
   },
   en: {
     tabInicio: "Home",
@@ -112,22 +140,25 @@ const translations = {
     tabCalcular: "Affinity Calculator",
     tabSimulador: "Simulator",
     headerPersonajesTitle: "GENERAL",
-    headerPersonajesDesc: "Browse character details, unlockable affection bonuses, and level requirements to plan your resources.",
-    headerCalcularTitle: "CALCULATE AFFINITY",
-    headerCalcularDesc: "Calculate estimated days and total Fons cost based on selected gifts, dates, and Fluffy Cottons.",
-    headerSimuladorTitle: "SIMULATOR",
-    headerSimuladorDesc: "Simulate level progression, adjust gift amounts, and send data directly to the calculator.",
+    headerPersonajesDesc: "Browse favorite gifts for each character to plan your resources. Calculations in this tab are designed to take affection from level 1 to level 10.",
+    headerCalcularTitle: "AFFINITY CALCULATOR",
+    headerCalcularDesc: "Calculate how many gifts, fluffy cottons, and dates it will take based on your current affection level.",
+    headerSimuladorTitle: "SIMULADOR",
+    headerSimuladorDesc: "Simulate level progression dynamically by adjusting gift amounts to your liking, taking your current level and affection into account.",
     seleccionarEsper: "Select Esper",
     subtituloInicio: "Use mouse wheel or drag to explore",
     bonoAfinidad: "Level 10 Affection Bonus",
+    bonoObsesion: "Level 10 Obsession Bonus",
     outfit: "Outfit",
     noOutfit: "No affection outfit available",
     itemLabel: "Item",
     affinityLabel: "Affection",
     icono: "[ Icon ]",
     avatar: "[ Avatar ]",
-    necesita: "Required",
+    necesita: "Affection required to level 10",
+    necesitaObsesion: "Obsession required to level 10",
     ingreseAfinidad: "Enter current affection",
+    ingreseObsesion: "Enter current obsession",
     nivel: "Level",
     cantRegalos: "Gifts required",
     diasFaltantes: "Days to go",
@@ -136,6 +167,7 @@ const translations = {
     nubesUsar: "Fluffy Cotton required",
     cita: "Date?",
     contarCita: "Date?",
+    contarDuelo: "Duel?",
     usarNube: "Fluffy Cotton?",
     sinCitaMsg: "This character cannot be dated",
     reporteTitulo: "Saved Resources Report",
@@ -147,7 +179,7 @@ const translations = {
     datesUsedText: "Dates required:",
     cloudsUsedText: "Fluffy Cotton req.:",
     daysRemainingText: "Days to go:",
-    regalosSinCondicion: "Unconditional Gifts",
+    regalosSinCondicion: "Unlimited Gifts",
     cartaEscritaMano: "A Handwritten Letter",
     boletoCineFloe: "Floe Cinema Ticket",
     enviarACalcular: "Send data",
@@ -165,7 +197,9 @@ const translations = {
     affectionLabelText: "Affection",
     affinityLabelUpper: "AFFECTION",
     levelLabelShort: "LEVEL",
-    affinityLabelShort: "AFFECTION"
+    affinityLabelShort: "AFFECTION",
+    obsessionLabel: "Obsession",
+    obsessionLabelUpper: "OBSESSION"
   }
 };
 
@@ -275,6 +309,33 @@ function aplicarTraducciones() {
     const labelBtn = document.querySelector(`#zero-skill-tab${tabNum} .zero-label-btn`);
     if (labelBtn) labelBtn.innerText = t.urbanSkill;
   });
+
+  if (selectedCharaTab1) {
+    onCharacterChangeTab1(selectedCharaTab1.chara);
+  }
+
+  if (selectedCharaTab2) {
+    actualizarTerminologiaZankouUI(selectedCharaTab2.chara);
+  }
+
+  if (selectedCharaSim) {
+    simOnCharacterChange(selectedCharaSim.chara);
+  }
+}
+
+function actualizarTerminologiaZankouUI(nombreChara) {
+  const isZankou = nombreChara && nombreChara.toLowerCase().includes('zankou');
+  const t = translations[currentLang];
+
+  const labelAfiInput = document.getElementById('p2-afiactual-label');
+  if (labelAfiInput) {
+    labelAfiInput.innerText = isZankou ? t.ingreseObsesion : t.ingreseAfinidad;
+  }
+
+  const labelNecesita = document.getElementById('p2-necesita-label');
+  if (labelNecesita) {
+    labelNecesita.innerText = isZankou ? t.necesitaObsesion : t.necesita;
+  }
 }
 
 function initWeb(data) {
@@ -305,9 +366,13 @@ function initWeb(data) {
   renderZeroSkillComponents();
 
   if (data.length > 0) {
-    onCharacterChangeTab1(data[0].chara);
-    onCharacterChangeTab2(data[0].chara);
-    simOnCharacterChange(data[0].chara);
+    const charTab1ToLoad = (lastSelectedTab1 && data.some(c => c.chara === lastSelectedTab1)) ? lastSelectedTab1 : data[0].chara;
+    const charTab2ToLoad = (lastSelectedTab2 && data.some(c => c.chara === lastSelectedTab2)) ? lastSelectedTab2 : data[0].chara;
+    const charSimToLoad  = (lastSelectedSim  && data.some(c => c.chara === lastSelectedSim )) ? lastSelectedSim  : data[0].chara;
+
+    onCharacterChangeTab1(charTab1ToLoad);
+    onCharacterChangeTab2(charTab2ToLoad);
+    simOnCharacterChange(charSimToLoad);
   }
   aplicarTraducciones();
   renderReporte();
@@ -325,6 +390,7 @@ function setZeroSkillLevel(tabNum, level) {
   } else {
     zeroSkillState[tabNum] = level;
   }
+  localStorage.setItem('zeroSkillState', JSON.stringify(zeroSkillState));
   updateZeroSkillUI(tabNum);
   
   if (tabNum === 1) recalculateTab1();
@@ -338,6 +404,7 @@ function toggleZeroSkillTab(tabNum) {
   } else {
     zeroSkillState[tabNum] = 1;
   }
+  localStorage.setItem('zeroSkillState', JSON.stringify(zeroSkillState));
   updateZeroSkillUI(tabNum);
 
   if (tabNum === 1) recalculateTab1();
@@ -381,6 +448,93 @@ function getZeroBuffValue(zeroLevel, bondLevel, baseValue) {
     return Math.round(baseValue * 1.05);
   }
   return baseValue;
+}
+
+function calcularRequisitosAfinidad(baseAfi, costUnit, usaNube, cuentaCita, tieneCita, umbralCita, zeroLevel, afiInicial = 0) {
+  const maxBondZeroThresholds = { 1: 4, 2: 5, 3: 6, 4: 7, 5: 8 };
+  const maxBondZeroLevel = zeroLevel > 0 ? (maxBondZeroThresholds[zeroLevel] || 0) : 0;
+  const afnZeroBufeada = maxBondZeroLevel > 0 ? (ACUMULADO_HASTA_NIVEL[maxBondZeroLevel] || 0) : 0;
+
+  let afnTramo1Meta = 0;
+  if (tieneCita && umbralCita >= 1 && umbralCita <= 10) {
+    afnTramo1Meta = ACUMULADO_HASTA_NIVEL[umbralCita - 1] || 0;
+  }
+
+  const afiBufeadaUnit = Math.round(baseAfi * 1.05);
+  let diasReq = 0;
+  let cantRegalos = 0;
+
+  if (!tieneCita || !cuentaCita) {
+    const regalosPorDia = usaNube ? 2 : 3;
+    const valorNubeBase = 400;
+    const valorNubeBufeada = 420;
+
+    let afiActualSim = afiInicial;
+    let diasSim = 0;
+    let regalosSim = 0;
+
+    while (afiActualSim < AFINIDAD_MAX && diasSim < 1000) {
+      diasSim++;
+      const estaEnBuffSim = zeroLevel > 0 && afnZeroBufeada > 0 && afiActualSim < afnZeroBufeada;
+      const currentAfiRegalo = estaEnBuffSim ? afiBufeadaUnit : baseAfi;
+      const currentNubeVal = usaNube ? (estaEnBuffSim ? valorNubeBufeada : valorNubeBase) : 0;
+      
+      for (let r = 0; r < regalosPorDia; r++) {
+        if (afiActualSim < AFINIDAD_MAX) {
+          afiActualSim += currentAfiRegalo;
+          regalosSim++;
+        }
+      }
+      if (usaNube && afiActualSim < AFINIDAD_MAX) {
+        afiActualSim += currentNubeVal;
+      }
+    }
+    diasReq = diasSim;
+    cantRegalos = regalosSim;
+  } else {
+    let afnFaltanteTramo1 = Math.max(0, afnTramo1Meta - afiInicial);
+    let afiAcumuladaDespuesTramo1 = Math.max(afnTramo1Meta, afiInicial);
+    let afnFaltanteTramo2 = Math.max(0, AFINIDAD_MAX - afiAcumuladaDespuesTramo1);
+
+    let afiBaseT1 = getZeroBuffValue(zeroLevel, Math.min(10, Math.max(1, umbralCita - 1)), baseAfi);
+    let valorNubeT1 = (zeroLevel > 0 && umbralCita <= (maxBondZeroLevel + 1)) ? 420 : 400;
+    let afiRegalosDiaT1 = usaNube ? (afiBaseT1 * 2 + valorNubeT1) : (afiBaseT1 * 3);
+    let diasT1 = afiRegalosDiaT1 > 0 ? Math.ceil(afnFaltanteTramo1 / afiRegalosDiaT1) : 0;
+
+    let afiBaseT2 = getZeroBuffValue(zeroLevel, 10, baseAfi);
+    let valorNubeT2 = 400;
+    let afiRegalosDiaT2 = usaNube ? (afiBaseT2 * 2 + valorNubeT2) : (afiBaseT2 * 3);
+    let afiCitaDia = 200;
+    let afiTotalDiaT2 = afiRegalosDiaT2 + afiCitaDia;
+
+    let diasT2 = 0;
+    if (afnFaltanteTramo2 > 0) {
+      diasT2 = afiTotalDiaT2 > 0 ? Math.ceil(afnFaltanteTramo2 / afiTotalDiaT2) : 0;
+    }
+
+    diasReq = diasT1 + diasT2;
+
+    let afiTotalGeneradaSinRegalos = (usaNube ? diasReq * 400 : 0) + (diasT2 * 200);
+    let afiNecesitadaEnRegalos = Math.max(0, (AFINIDAD_MAX - afiInicial) - afiTotalGeneradaSinRegalos);
+
+    if (zeroLevel > 0 && afnZeroBufeada > 0) {
+      let afiTargetBuff = Math.min(afiNecesitadaEnRegalos, Math.max(0, afnZeroBufeada - afiInicial));
+      let regalosT1Buff = afiBufeadaUnit > 0 ? Math.ceil(afiTargetBuff / afiBufeadaUnit) : 0;
+      let afiCubiertaT1 = regalosT1Buff * afiBufeadaUnit;
+
+      let afiRestanteNorm = Math.max(0, afiNecesitadaEnRegalos - afiCubiertaT1);
+      let regalosT2Norm = baseAfi > 0 ? Math.ceil(afiRestanteNorm / baseAfi) : 0;
+
+      cantRegalos = regalosT1Buff + regalosT2Norm;
+    } else {
+      cantRegalos = baseAfi > 0 ? Math.ceil(afiNecesitadaEnRegalos / baseAfi) : 0;
+    }
+  }
+
+  const costoTotal = cantRegalos * costUnit;
+  const nubesTotalesUsadas = usaNube ? diasReq : 0;
+
+  return { diasReq, cantRegalos, costoTotal, nubesTotalesUsadas };
 }
 
 function renderDotaCarousel(charactersData) {
@@ -475,12 +629,21 @@ function renderSimVerticalCarousel(charactersData) {
   if (!container) return;
   container.innerHTML = '';
 
-  charactersData.forEach((char, index) => {
+  charactersData.forEach((char) => {
     const avatarCircle = document.createElement('div');
-    avatarCircle.className = `sim-esper-circle ${index === 0 ? 'active' : ''}`;
+    avatarCircle.className = `sim-esper-circle ${char.chara === lastSelectedSim ? 'active' : ''}`;
     avatarCircle.dataset.chara = char.chara;
 
-    const iconUrl = getDirectImageUrl(char.bond_img_short || char.pj_base_short || char.icon_afi);
+    let activeSkinIdx = characterSkinState[char.chara] || 0;
+    let iconUrl = getDirectImageUrl(char.bond_img_short || char.pj_base_short || char.icon_afi);
+    
+    if (activeSkinIdx > 0) {
+      const outfits = simObtenerListaOutfitsValidosParaChara(char);
+      if (outfits[activeSkinIdx] && outfits[activeSkinIdx].short) {
+        iconUrl = getDirectImageUrl(outfits[activeSkinIdx].short);
+      }
+    }
+
     avatarCircle.innerHTML = `<img src="${iconUrl}" alt="${char.chara}">`;
 
     avatarCircle.addEventListener('click', () => {
@@ -763,6 +926,9 @@ function onCharacterChangeTab1(name) {
   selectedCharaTab1 = charactersData.find(c => c.chara === name);
   if (!selectedCharaTab1) return;
   
+  lastSelectedTab1 = name;
+  localStorage.setItem('lastSelectedTab1', name);
+
   const sel1 = document.getElementById('select-chara-1');
   const p1Bonus = document.getElementById('p1-bonus');
   const p1OutfitName = document.getElementById('p1-outfit-name');
@@ -776,6 +942,13 @@ function onCharacterChangeTab1(name) {
   if (p1OutfitName) {
     const bondName = isEn ? (selectedCharaTab1.bond_name || translations[currentLang].outfit) : (selectedCharaTab1.bond_name_es || selectedCharaTab1.bond_name || translations[currentLang].outfit);
     p1OutfitName.innerText = bondName;
+  }
+
+  const isZankouTab1 = name && name.toLowerCase().includes('zankou');
+  const t = translations[currentLang];
+  const labelBonoTitle = document.getElementById('p1-bono-title');
+  if (labelBonoTitle) {
+    labelBonoTitle.innerText = isZankouTab1 ? t.bonoObsesion : t.bonoAfinidad;
   }
   
   const item1Name = document.getElementById('p1-item1-name');
@@ -826,6 +999,9 @@ function onCharacterChangeTab2(name) {
   selectedCharaTab2 = charactersData.find(c => c.chara === name);
   if (!selectedCharaTab2) return;
   
+  lastSelectedTab2 = name;
+  localStorage.setItem('lastSelectedTab2', name);
+
   const sel2 = document.getElementById('select-chara-2');
   const afiactual = document.getElementById('p2-afiactual');
   const nivel = document.getElementById('p2-nivel');
@@ -833,10 +1009,35 @@ function onCharacterChangeTab2(name) {
   const boletosQty = document.getElementById('p2-boletos-qty');
 
   if (sel2) sel2.value = name;
-  if (afiactual) afiactual.value = '0';
-  if (nivel) nivel.value = '1';
-  if (cartasQty) cartasQty.value = '0';
-  if (boletosQty) boletosQty.value = '0';
+
+  let savedData = tab2UserState[name];
+  if (!savedData) {
+    savedData = {
+      nivel: '1',
+      afiactual: '0',
+      cartasQty: '0',
+      boletosQty: '0',
+      nube1: false,
+      nube2: false,
+      nube3: false,
+      cita1: false,
+      cita2: false,
+      cita3: false
+    };
+  }
+
+  if (nivel) nivel.value = savedData.nivel;
+  if (afiactual) afiactual.value = savedData.afiactual;
+  if (cartasQty) cartasQty.value = savedData.cartasQty;
+  if (boletosQty) boletosQty.value = savedData.boletosQty;
+
+  [1, 2, 3].forEach(idx => {
+    const nubeElem = document.getElementById(`p2-nube${idx}`);
+    const citaElem = document.getElementById(`p2-cita${idx}`);
+    if (nubeElem) nubeElem.checked = !!savedData[`nube${idx}`];
+    if (citaElem) citaElem.checked = !!savedData[`cita${idx}`];
+  });
+  lastUserSelectedLevelTab2 = Number(savedData.nivel) || 1;
 
   const isEn = currentLang === 'en';
   const item1Name = document.getElementById('p2-item1-name');
@@ -869,7 +1070,34 @@ function onCharacterChangeTab2(name) {
     }
   });
 
-  onNivelChangeTab2();
+  validarRestriccionCitaTab2();
+  actualizarTerminologiaZankouUI(name);
+  recalculateTab2();
+}
+
+function guardarEstadoTab2Actual() {
+  if (!selectedCharaTab2) return;
+  const name = selectedCharaTab2.chara;
+  const nivel = document.getElementById('p2-nivel')?.value || '1';
+  const afiactual = document.getElementById('p2-afiactual')?.value || '0';
+  const cartasQty = document.getElementById('p2-cartas-qty')?.value || '0';
+  const boletosQty = document.getElementById('p2-boletos-qty')?.value || '0';
+
+  let stateObj = {
+    nivel,
+    afiactual,
+    cartasQty,
+    boletosQty,
+    nube1: document.getElementById('p2-nube1')?.checked || false,
+    nube2: document.getElementById('p2-nube2')?.checked || false,
+    nube3: document.getElementById('p2-nube3')?.checked || false,
+    cita1: document.getElementById('p2-cita1')?.checked || false,
+    cita2: document.getElementById('p2-cita2')?.checked || false,
+    cita3: document.getElementById('p2-cita3')?.checked || false,
+  };
+
+  tab2UserState[name] = stateObj;
+  localStorage.setItem('tab2UserState', JSON.stringify(tab2UserState));
 }
 
 function resetPerfilTab2() {
@@ -877,6 +1105,7 @@ function resetPerfilTab2() {
   const afiActualInput = document.getElementById('p2-afiactual');
   if (nivelSelect) nivelSelect.value = '1';
   if (afiActualInput) afiActualInput.value = '0';
+  guardarEstadoTab2Actual();
   recalculateTab2();
 }
 
@@ -885,6 +1114,7 @@ function reiniciarRegalosTab2() {
   const boletosInput = document.getElementById('p2-boletos-qty');
   if (cartasInput) cartasInput.value = '0';
   if (boletosInput) boletosInput.value = '0';
+  guardarEstadoTab2Actual();
   recalculateTab2();
 }
 
@@ -923,12 +1153,16 @@ function aplicarRegalosTab2() {
   cartasInput.value = '0';
   boletosInput.value = '0';
 
+  guardarEstadoTab2Actual();
   recalculateTab2();
 }
 
 function simOnCharacterChange(name) {
   selectedCharaSim = charactersData.find(c => c.chara === name);
   if (!selectedCharaSim) return;
+
+  lastSelectedSim = name;
+  localStorage.setItem('lastSelectedSim', name);
 
   if (characterSkinState[name] === undefined) {
     characterSkinState[name] = 0;
@@ -938,6 +1172,13 @@ function simOnCharacterChange(name) {
   const simCharaTagContainer = document.getElementById('sim-chara-tag-container');
 
   if (simCharaName) simCharaName.innerText = selectedCharaSim.chara;
+
+  const isZankouSim = name && name.toLowerCase().includes('zankou');
+  const simLevelBadgeLabel = document.getElementById('sim-level-badge-label');
+  const t = translations[currentLang];
+  if (simLevelBadgeLabel) {
+    simLevelBadgeLabel.innerText = isZankouSim ? t.obsessionLabelUpper : t.affinityLabelUpper;
+  }
 
   const isEn = currentLang === 'en';
   if (simCharaTagContainer) {
@@ -952,19 +1193,34 @@ function simOnCharacterChange(name) {
     `;
   }
 
+  let savedSimData = simUserState[name];
+  if (!savedSimData) {
+    savedSimData = {
+      initLevel: '1',
+      initAffinity: '0',
+      cartasQty: '0',
+      boletosQty: '0',
+      gift1: '0',
+      gift2: '0',
+      gift3: '0',
+      gift4: '0',
+      gift5: '0'
+    };
+  }
+
   const simInitLevel = document.getElementById('sim-init-level');
   const simInitAffinity = document.getElementById('sim-init-affinity');
-  if (simInitLevel) simInitLevel.value = '1';
-  if (simInitAffinity) simInitAffinity.value = '0';
+  if (simInitLevel) simInitLevel.value = savedSimData.initLevel;
+  if (simInitAffinity) simInitAffinity.value = savedSimData.initAffinity;
 
   const cartasQtyInv = document.getElementById('sim-inv-cartas-qty');
   const boletosQtyInv = document.getElementById('sim-inv-boletos-qty');
-  if (cartasQtyInv) cartasQtyInv.value = '0';
-  if (boletosQtyInv) boletosQtyInv.value = '0';
+  if (cartasQtyInv) cartasQtyInv.value = savedSimData.cartasQty;
+  if (boletosQtyInv) boletosQtyInv.value = savedSimData.boletosQty;
 
   [1, 2, 3, 4, 5].forEach(idx => {
     const invInput = document.getElementById(`sim-inv-gift-qty-${idx}`);
-    if (invInput) invInput.value = '0';
+    if (invInput) invInput.value = savedSimData[`gift${idx}`] || '0';
   });
 
   simActualizarOutfitVisual();
@@ -980,35 +1236,55 @@ function simOnCharacterChange(name) {
   }
 }
 
-function simObtenerListaOutfitsValidos() {
-  if (!selectedCharaSim) return [];
+function guardarEstadoSimActual() {
+  if (!selectedCharaSim) return;
+  const name = selectedCharaSim.chara;
+
+  let simObj = {
+    initLevel: document.getElementById('sim-init-level')?.value || '1',
+    initAffinity: document.getElementById('sim-init-affinity')?.value || '0',
+    cartasQty: document.getElementById('sim-inv-cartas-qty')?.value || '0',
+    boletosQty: document.getElementById('sim-inv-boletos-qty')?.value || '0',
+    gift1: document.getElementById('sim-inv-gift-qty-1')?.value || '0',
+    gift2: document.getElementById('sim-inv-gift-qty-2')?.value || '0',
+    gift3: document.getElementById('sim-inv-gift-qty-3')?.value || '0',
+    gift4: document.getElementById('sim-inv-gift-qty-4')?.value || '0',
+    gift5: document.getElementById('sim-inv-gift-qty-5')?.value || '0',
+  };
+
+  simUserState[name] = simObj;
+  localStorage.setItem('simUserState', JSON.stringify(simUserState));
+}
+
+function simObtenerListaOutfitsValidosParaChara(char) {
+  if (!char) return [];
   let lista = [];
 
-  const baseFull = selectedCharaSim.pj_base_full || selectedCharaSim.img_default || selectedCharaSim.img;
+  const baseFull = char.pj_base_full || char.img_default || char.img;
   if (baseFull && baseFull.toString().trim() !== "") {
     lista.push({
       full: baseFull,
-      short: selectedCharaSim.pj_base_short || selectedCharaSim.icon_afi || selectedCharaSim.img,
-      name_en: selectedCharaSim.pj_base_name || "Default Attire",
-      name_es: selectedCharaSim.pj_base_name_es || selectedCharaSim.pj_base_name || "Atuendo por Defecto"
+      short: char.pj_base_short || char.icon_afi || char.img,
+      name_en: char.pj_base_name || "Default Attire",
+      name_es: char.pj_base_name_es || char.pj_base_name || "Atuendo por Defecto"
     });
   }
 
-  const bondFull = selectedCharaSim.bond_img_full || selectedCharaSim.outfit_img;
+  const bondFull = char.bond_img_full || char.outfit_img;
   if (bondFull && bondFull.toString().trim() !== "") {
     lista.push({
       full: bondFull,
-      short: selectedCharaSim.bond_img_short || selectedCharaSim.icon_afi || bondFull,
-      name_en: selectedCharaSim.bond_name || "Bond Attire",
-      name_es: selectedCharaSim.bond_name_es || selectedCharaSim.bond_name || "Traje de Afinidad"
+      short: char.bond_img_short || char.icon_afi || bondFull,
+      name_en: char.bond_name || "Bond Attire",
+      name_es: char.bond_name_es || char.bond_name || "Traje de Afinidad"
     });
   }
 
   for (let i = 1; i <= 6; i++) {
-    const fullImg = selectedCharaSim[`outfit_img_full_${i}`];
-    const shortImg = selectedCharaSim[`outfit_img_short_${i}`];
-    const nameEn = selectedCharaSim[`outfit_name_${i}`];
-    const nameEs = selectedCharaSim[`outfit_name_${i}_es`];
+    const fullImg = char[`outfit_img_full_${i}`];
+    const shortImg = char[`outfit_img_short_${i}`];
+    const nameEn = char[`outfit_name_${i}`];
+    const nameEs = char[`outfit_name_${i}_es`];
 
     if (fullImg && fullImg.toString().trim() !== "") {
       lista.push({
@@ -1021,6 +1297,10 @@ function simObtenerListaOutfitsValidos() {
   }
 
   return lista;
+}
+
+function simObtenerListaOutfitsValidos() {
+  return simObtenerListaOutfitsValidosParaChara(selectedCharaSim);
 }
 
 function cambiarSkinSimulador(direccion) {
@@ -1039,7 +1319,18 @@ function cambiarSkinSimulador(direccion) {
   }
 
   characterSkinState[charName] = activeIndex;
+  localStorage.setItem('characterSkinState', JSON.stringify(characterSkinState));
+
   simActualizarOutfitVisual();
+
+  const vContainer = document.getElementById('sim-vertical-espers');
+  if (vContainer) {
+    const activeCircle = vContainer.querySelector(`.sim-esper-circle[data-chara="${charName}"] img`);
+    const skinActual = outfitsDisponibles[activeIndex];
+    if (activeCircle && skinActual && skinActual.short) {
+      activeCircle.src = getDirectImageUrl(skinActual.short);
+    }
+  }
 }
 
 function simActualizarOutfitVisual() {
@@ -1053,7 +1344,8 @@ function simActualizarOutfitVisual() {
 
   if (activeIndex >= outfits.length) {
     activeIndex = 0;
-    characterSkinState[charName] = 0;
+    characterSkinState[charName] = activeIndex;
+    localStorage.setItem('characterSkinState', JSON.stringify(characterSkinState));
   }
 
   const skinActual = outfits[activeIndex];
@@ -1070,14 +1362,6 @@ function simActualizarOutfitVisual() {
       <button type="button" class="sim-skin-nav-btn sim-skin-next" onclick="cambiarSkinSimulador(1)" title="Siguiente skin">›</button>
       <div class="sim-outfit-name-box" id="sim-outfit-name-label">${nombreSkin}</div>
     `;
-  }
-
-  const vContainer = document.getElementById('sim-vertical-espers');
-  if (vContainer) {
-    const activeCircle = vContainer.querySelector(`.sim-esper-circle[data-chara="${selectedCharaSim.chara}"] img`);
-    if (activeCircle && skinActual.short) {
-      activeCircle.src = getDirectImageUrl(skinActual.short);
-    }
   }
 }
 
@@ -1104,6 +1388,11 @@ function simResetAll() {
   if (initLevelElem) initLevelElem.value = '1';
   if (initAfiElem) initAfiElem.value = '0';
 
+  if (selectedCharaSim) {
+    delete simUserState[selectedCharaSim.chara];
+    localStorage.setItem('simUserState', JSON.stringify(simUserState));
+  }
+
   simOnCharacterChange(selectedCharaSim ? selectedCharaSim.chara : charactersData[0].chara);
 }
 
@@ -1112,6 +1401,7 @@ function formatAndValidateSimAffinity(input) {
   let rawValue = input.value.replace(/[^0-9]/g, '');
   if (rawValue === '') {
     input.value = '0';
+    guardarEstadoSimActual();
     simRecalcular();
     return;
   }
@@ -1126,17 +1416,20 @@ function formatAndValidateSimAffinity(input) {
     num = maxPermitido;
   }
   input.value = num.toLocaleString('en-US');
+  guardarEstadoSimActual();
   simRecalcular();
 }
 
 function validarRestriccionCitaTab1() {
   if (!selectedCharaTab1) return;
-  const nivelCitaRaw = selectedCharaTab1.nivelCita;
+  const rawCita = selectedCharaTab1.nivelCita !== undefined && selectedCharaTab1.nivelCita !== null 
+                  ? String(selectedCharaTab1.nivelCita).trim() 
+                  : "";
 
   [1, 2, 3].forEach(idx => {
     const checkboxCita = document.getElementById(`p1-cita${idx}`);
     if (checkboxCita) {
-      if (nivelCitaRaw === "No" || nivelCitaRaw === "" || nivelCitaRaw === undefined) {
+      if (rawCita.toLowerCase().includes("no") || rawCita === "") {
         checkboxCita.disabled = true;
         checkboxCita.checked = false;
       } else {
@@ -1151,16 +1444,22 @@ function validarRestriccionCitaTab2() {
 
   const nivelSelect = document.getElementById('p2-nivel');
   const nivelSel = nivelSelect ? Number(nivelSelect.value) || 1 : 1;
-  const nivelCitaRaw = selectedCharaTab2.nivelCita;
+  const rawCita = selectedCharaTab2.nivelCita !== undefined && selectedCharaTab2.nivelCita !== null 
+                  ? String(selectedCharaTab2.nivelCita).trim() 
+                  : "";
+
+  let umbralRequerido = parseInt(rawCita, 10);
+  if (isNaN(umbralRequerido)) {
+    umbralRequerido = 4;
+  }
 
   [1, 2, 3].forEach(idx => {
     const checkboxCita = document.getElementById(`p2-cita${idx}`);
     if (checkboxCita) {
-      if (nivelCitaRaw === "No" || nivelCitaRaw === "" || nivelCitaRaw === undefined) {
+      if (rawCita.toLowerCase().includes("no") || rawCita === "") {
         checkboxCita.disabled = true;
         checkboxCita.checked = false;
       } else {
-        const umbralRequerido = parseInt(nivelCitaRaw, 10);
         if (nivelSel >= umbralRequerido) {
           checkboxCita.disabled = false;
         } else {
@@ -1192,6 +1491,7 @@ function onNivelChangeTab2() {
     rawAfiInput.value = actualVal.toLocaleString('en-US');
   }
   
+  guardarEstadoTab2Actual();
   recalculateTab2();
 }
 
@@ -1200,6 +1500,7 @@ function formatAndValidateAffinity(input) {
   let rawValue = input.value.replace(/[^0-9]/g, '');
   if (rawValue === '') {
     input.value = '0';
+    guardarEstadoTab2Actual();
     recalculateTab2();
     return;
   }
@@ -1214,6 +1515,7 @@ function formatAndValidateAffinity(input) {
     num = maxPermitido;
   }
   input.value = num.toLocaleString('en-US');
+  guardarEstadoTab2Actual();
   recalculateTab2();
 }
 
@@ -1222,6 +1524,7 @@ function onTab1CheckboxChange() {
 }
 
 function onTab2CheckboxChange() {
+  guardarEstadoTab2Actual();
   recalculateTab2();
 }
 
@@ -1387,6 +1690,9 @@ function renderReporte() {
       itemName = isEn ? (charaObj['itemname' + item.itemIndex + 'en'] || charaObj['itemname' + item.itemIndex]) : charaObj['itemname' + item.itemIndex];
       itemImg = getDirectImageUrl(charaObj['itemimg_' + item.itemIndex]);
     }
+
+    const isZankouReport = item.chara && item.chara.toLowerCase().includes('zankou');
+    const labelAffText = isZankouReport ? t.obsessionLabel : t.affectionLabelText;
     
     html += `
       <div class="report-card" style="${bgStyle}">
@@ -1411,7 +1717,7 @@ function renderReporte() {
           <div class="report-item-details">
             <div class="report-card-itemline">${itemName}</div>
             <div class="report-card-affinity-gain">
-              <img src="${AFFINITY_ICON_URL}" class="affinity-icon" alt="Affinity"> +${item.afiValor} ${t.affectionLabelText}
+              <img src="${AFFINITY_ICON_URL}" class="affinity-icon" alt="Affinity"> +${item.afiValor} ${labelAffText}
             </div>
           </div>
         </div>
@@ -1444,24 +1750,28 @@ function renderReporte() {
 function recalculateTab1() {
   if (!selectedCharaTab1) return;
 
-  const nivelCitaRaw = selectedCharaTab1.nivelCita;
-  let tieneCita = true;
-  let umbralCita = parseInt(nivelCitaRaw, 10);
+  const rawCita = selectedCharaTab1.nivelCita !== undefined && selectedCharaTab1.nivelCita !== null 
+                  ? String(selectedCharaTab1.nivelCita).trim() 
+                  : "";
 
-  if (isNaN(umbralCita)) {
-    const texto = String(nivelCitaRaw).toLowerCase();
-    if (texto.includes("no") || texto === "") {
-      tieneCita = false;
-      umbralCita = 0;
-    } else {
-      umbralCita = 4;
-    }
+  let tieneCita = true;
+  let umbralCita = parseInt(rawCita, 10);
+
+  const isZankouTab1 = selectedCharaTab1.chara && selectedCharaTab1.chara.toLowerCase().includes('zankou');
+  const t = translations[currentLang];
+  const labelAff = isZankouTab1 ? t.obsessionLabel : t.affinityLabel;
+
+  if (rawCita.toLowerCase().includes("no") || rawCita === "") {
+    tieneCita = false;
+    umbralCita = 0;
+  } else if (isNaN(umbralCita)) {
+    tieneCita = true;
+    umbralCita = 4;
+  } else {
+    tieneCita = true;
   }
 
   const zeroLvlTab1 = zeroSkillState[1];
-  const maxBondZeroThresholds = { 1: 4, 2: 5, 3: 6, 4: 7, 5: 8 };
-  const maxBondZeroLevel = zeroLvlTab1 > 0 ? maxBondZeroThresholds[zeroLvlTab1] : 0;
-  const afnZeroBufeada = maxBondZeroLevel > 0 ? (ACUMULADO_HASTA_NIVEL[maxBondZeroLevel] || 0) : 0;
 
   [1, 2, 3].forEach(idx => {
     const baseAfi = selectedCharaTab1['affinity' + idx] || 0;
@@ -1474,107 +1784,33 @@ function recalculateTab1() {
     const checkboxCita = document.getElementById(`p1-cita${idx}`);
     const cuentaCita = checkboxCita ? (checkboxCita.checked && !checkboxCita.disabled) : false;
 
-    const t = translations[currentLang];
     const afiDisplay = getZeroBuffValue(zeroLvlTab1, 1, baseAfi);
 
-    let diasReq = 0;
-    let cantRegalos = 0;
-
-    if (!tieneCita || !cuentaCita) {
-      const regalosPorDia = usaNube ? 2 : 3;
-      const valorNubeBase = 400;
-      const afiBufeada = Math.round(baseAfi * 1.05);
-      const valorNubeBufeada = 420;
-
-      let afiActualSim = 0;
-      let diasSim = 0;
-      let regalosSim = 0;
-
-      while (afiActualSim < AFINIDAD_MAX && diasSim < 1000) {
-        diasSim++;
-        
-        const estaEnBuff = zeroLvlTab1 > 0 && afnZeroBufeada > 0 && afiActualSim < afnZeroBufeada;
-        const currentAfiRegalo = estaEnBuff ? afiBufeada : baseAfi;
-        const currentNubeVal = usaNube ? (estaEnBuff ? valorNubeBufeada : valorNubeBase) : 0;
-        
-        for (let r = 0; r < regalosPorDia; r++) {
-          if (afiActualSim < AFINIDAD_MAX) {
-            afiActualSim += currentAfiRegalo;
-            regalosSim++;
-          }
-        }
-        
-        if (usaNube && afiActualSim < AFINIDAD_MAX) {
-          afiActualSim += currentNubeVal;
-        }
-      }
-
-      diasReq = diasSim;
-      cantRegalos = regalosSim;
-    }
-    else {
-      let afnTramo1Cita = (umbralCita >= 1 && umbralCita <= 10) ? (ACUMULADO_HASTA_NIVEL[umbralCita - 1] || 0) : 0;
-      
-      let afiBaseT1 = getZeroBuffValue(zeroLvlTab1, Math.min(10, Math.max(1, umbralCita - 1)), baseAfi);
-      let valorNubeT1 = (zeroLvlTab1 > 0 && umbralCita <= (maxBondZeroLevel + 1)) ? 420 : 400;
-      let afiRegalosDiaT1 = usaNube ? (afiBaseT1 * 2 + valorNubeT1) : (afiBaseT1 * 3);
-      
-      let diasT1 = afiRegalosDiaT1 > 0 ? Math.ceil(afnTramo1Cita / afiRegalosDiaT1) : 0;
-      let afiAcumuladaFinT1 = diasT1 * afiRegalosDiaT1;
-
-      let afnFaltanteTramo2 = Math.max(0, AFINIDAD_MAX - afiAcumuladaFinT1);
-      let afiBaseT2 = getZeroBuffValue(zeroLvlTab1, 10, baseAfi);
-      let valorNubeT2 = 400;
-      let afiRegalosDiaT2 = usaNube ? (afiBaseT2 * 2 + valorNubeT2) : (afiBaseT2 * 3);
-      let afiCitaDia = 200;
-      let afiTotalDiaT2 = afiRegalosDiaT2 + afiCitaDia;
-
-      let diasT2 = 0;
-      if (afnFaltanteTramo2 > 0) {
-        diasT2 = afiTotalDiaT2 > 0 ? Math.ceil(afnFaltanteTramo2 / afiTotalDiaT2) : 0;
-      }
-
-      diasReq = diasT1 + diasT2;
-
-      let afiTotalGeneradaSinRegalos = (usaNube ? diasReq * 400 : 0) + (diasT2 * 200);
-      let afiNecesitadaEnRegalos = Math.max(0, AFINIDAD_MAX - afiTotalGeneradaSinRegalos);
-
-      if (zeroLvlTab1 > 0 && afnZeroBufeada > 0) {
-        let afiBufeadaUnit = Math.round(baseAfi * 1.05);
-        let afiTargetBuff = Math.min(afiNecesitadaEnRegalos, afnZeroBufeada);
-        let regalosT1Buff = afiBufeadaUnit > 0 ? Math.ceil(afiTargetBuff / afiBufeadaUnit) : 0;
-        let afiCubiertaT1 = regalosT1Buff * afiBufeadaUnit;
-
-        let afiRestanteNorm = Math.max(0, afiNecesitadaEnRegalos - afiCubiertaT1);
-        let regalosT2Norm = baseAfi > 0 ? Math.ceil(afiRestanteNorm / baseAfi) : 0;
-
-        cantRegalos = regalosT1Buff + regalosT2Norm;
-      } else {
-        cantRegalos = baseAfi > 0 ? Math.ceil(afiNecesitadaEnRegalos / baseAfi) : 0;
-      }
-    }
-
-    const costoTotal = cantRegalos * costUnit;
-    const nubesTotalesUsadas = usaNube ? diasReq : 0;
+    const resultadoCalculo = calcularRequisitosAfinidad(baseAfi, costUnit, usaNube, cuentaCita, tieneCita, umbralCita, zeroLvlTab1, 0);
+    const diasReq = resultadoCalculo.diasReq;
+    const cantRegalos = resultadoCalculo.cantRegalos;
+    const costoTotal = resultadoCalculo.costoTotal;
+    const nubesTotalesUsadas = resultadoCalculo.nubesTotalesUsadas;
 
     let citaHtml = '';
     if (tieneCita) {
+      const textoCitaLabel = isZankouTab1 ? t.contarDuelo : t.contarCita;
       citaHtml = `
         <div class="toggle-container" onclick="toggleCardCheckbox('p1-cita${idx}', event)">
-          <span>${t.contarCita}</span>
+          <span>${textoCitaLabel}</span>
           <input type="checkbox" id="p1-cita${idx}" ${cuentaCita ? 'checked' : ''} onchange="onTab1CheckboxChange()" onclick="event.stopPropagation()">
         </div>
       `;
     } else {
       citaHtml = `
-        <div style="background-color: rgba(239, 68, 68, 0.15); border: 1px solid #fecaca; color: #ef4444; padding: 8px; border-radius: 6px; font-size: 11px; text-align: center; margin-bottom: 8px; font-weight: bold;">
-          ${t.sinCitaMsg}
+        <div class="toggle-container" style="background-color: rgba(239, 68, 68, 0.15); border: 1px solid #fecaca; color: #ef4444; font-weight: bold; justify-content: center; cursor: default;">
+          <span style="font-size: 11px; text-align: center;">${t.sinCitaMsg}</span>
         </div>
       `;
     }
 
     container.innerHTML = `
-      <div class="metric-row"><span class="metric-label">${t.affinityLabel}</span><span class="metric-value"><img src="${AFFINITY_ICON_URL}" class="affinity-icon" alt="Afinidad"> ${afiDisplay}</span></div>
+      <div class="metric-row"><span class="metric-label">${labelAff}</span><span class="metric-value"><img src="${AFFINITY_ICON_URL}" class="affinity-icon" alt="Afinidad"> ${afiDisplay}</span></div>
       <div class="metric-row"><span class="metric-label">${t.precioUnidad}</span><span class="metric-value">${costUnit.toLocaleString('en-US')} <img src="${FONS_ICON_URL}" class="fons-icon" alt="Fons"></span></div>
       
       ${citaHtml}
@@ -1615,6 +1851,8 @@ function calcularNivelYRestante(puntosTotales) {
 function simRecalcular() {
   if (!selectedCharaSim) return;
 
+  guardarEstadoSimActual();
+
   const zeroLvlSim = zeroSkillState[3];
   const maxBondZeroThresholds = { 1: 4, 2: 5, 3: 6, 4: 7, 5: 8 };
   const maxBondZeroLevel = zeroLvlSim > 0 ? (maxBondZeroThresholds[zeroLvlSim] || 0) : 0;
@@ -1630,8 +1868,8 @@ function simRecalcular() {
   const afiBaseNivel = ACUMULADO_HASTA_NIVEL[initLevel - 1] || 0;
   let afiAcumulada = afiBaseNivel + initAfi;
 
-  function getUnitVal(baseUnit) {
-    return (zeroLvlSim > 0 && afnZeroMeta > 0 && afiAcumulada < afnZeroMeta) ? Math.round(baseUnit * 1.05) : baseUnit;
+  function getUnitVal(baseUnit, currentAfi) {
+    return (zeroLvlSim > 0 && afnZeroMeta > 0 && currentAfi < afnZeroMeta) ? Math.round(baseUnit * 1.05) : baseUnit;
   }
 
   const inputCartas = document.getElementById('sim-inv-cartas-qty');
@@ -1660,18 +1898,12 @@ function simRecalcular() {
   inputsRegalos.forEach(item => {
     if (!item.input) return;
     let cantDeseada = Number(item.input.value) || 0;
-    if (cantDeseada <= 0) {
-      if (item.valElem) {
-        const unitVal = getUnitVal(item.base);
-        item.valElem.innerHTML = `<img src="${AFFINITY_ICON_URL}" class="affinity-icon" alt="Affinity"> ${unitVal}`;
-      }
-      return;
-    }
+    if (cantDeseada <= 0) return;
 
     let cantUsada = 0;
     for (let r = 0; r < cantDeseada; r++) {
       if (afiAcumulada >= AFINIDAD_MAX) break;
-      const unitVal = getUnitVal(item.base);
+      const unitVal = getUnitVal(item.base, afiAcumulada);
       if (afiAcumulada + unitVal > AFINIDAD_MAX) {
         if (afiAcumulada < AFINIDAD_MAX) {
           afiAcumulada = AFINIDAD_MAX;
@@ -1686,14 +1918,16 @@ function simRecalcular() {
     if (cantUsada !== cantDeseada) {
       item.input.value = cantUsada;
     }
-
-    if (item.valElem) {
-      const unitVal = getUnitVal(item.base);
-      item.valElem.innerHTML = `<img src="${AFFINITY_ICON_URL}" class="affinity-icon" alt="Affinity"> ${unitVal}`;
-    }
   });
 
   if (afiAcumulada > AFINIDAD_MAX) afiAcumulada = AFINIDAD_MAX;
+
+  inputsRegalos.forEach(item => {
+    if (item.valElem) {
+      const unitVal = getUnitVal(item.base, afiAcumulada);
+      item.valElem.innerHTML = `<img src="${AFFINITY_ICON_URL}" class="affinity-icon" alt="Affinity"> ${unitVal}`;
+    }
+  });
 
   const res = calcularNivelYRestante(afiAcumulada);
 
@@ -1755,13 +1989,9 @@ function simEnviarDatos() {
 
   function sumarConBuffSim(cantidad, baseUnit) {
     if (cantidad <= 0) return;
-    const bufeadaUnit = Math.round(baseUnit * 1.05);
     for (let r = 0; r < cantidad; r++) {
-      if (zeroLvlSim > 0 && afnZeroMeta > 0 && afiAcumulada < afnZeroMeta) {
-        afiAcumulada += bufeadaUnit;
-      } else {
-        afiAcumulada += baseUnit;
-      }
+      const bufeadaUnit = (zeroLvlSim > 0 && afnZeroMeta > 0 && afiAcumulada < afnZeroMeta) ? Math.round(baseUnit * 1.05) : baseUnit;
+      afiAcumulada += bufeadaUnit;
     }
   }
 
@@ -1793,6 +2023,8 @@ function simEnviarDatos() {
   if (p2Nivel) p2Nivel.value = res.nivel;
   if (p2Afiactual) p2Afiactual.value = res.sobra.toLocaleString('en-US');
 
+  guardarEstadoTab2Actual();
+
   const tabCalcBtn = document.querySelectorAll('.nav-sidebar-btn')[2];
   if (tabCalcBtn) {
     switchTab('tab-calcular', tabCalcBtn);
@@ -1804,13 +2036,14 @@ function simEnviarDatos() {
 function recalculateTab2() {
   if (!selectedCharaTab2) return;
 
+  guardarEstadoTab2Actual();
   validarRestriccionCitaTab2();
 
   const nivelSelect = document.getElementById('p2-nivel');
   const afiActualInput = document.getElementById('p2-afiactual');
   if (!nivelSelect || !afiActualInput) return;
 
-  let nivelSel = Number(nivelSelect.value) || 1;
+  let nivelSel = Number(nivelSelect.value) || lastUserSelectedLevelTab2 || 1;
   if (nivelSel < 10) {
     lastUserSelectedLevelTab2 = nivelSel;
   } else {
@@ -1834,14 +2067,14 @@ function recalculateTab2() {
   const maxBondZeroLevel = zeroLvlTab2 > 0 ? (maxBondZeroThresholds[zeroLvlTab2] || 0) : 0;
   const afnZeroMeta = maxBondZeroLevel > 0 ? (ACUMULADO_HASTA_NIVEL[maxBondZeroLevel] || 0) : 0;
 
-  function getTab2UnitVal(baseUnit) {
-    return (zeroLvlTab2 > 0 && afnZeroMeta > 0 && afiAcumulada < afnZeroMeta) ? Math.round(baseUnit * 1.05) : baseUnit;
+  function getTab2UnitVal(baseUnit, currentAfi) {
+    return (zeroLvlTab2 > 0 && afnZeroMeta > 0 && currentAfi < afnZeroMeta) ? Math.round(baseUnit * 1.05) : baseUnit;
   }
 
   let cartasUsadas = 0;
   for (let c = 0; c < cartasQty; c++) {
     if (afiAcumulada >= AFINIDAD_MAX) break;
-    const valCarta = getTab2UnitVal(2000);
+    const valCarta = getTab2UnitVal(2000, afiAcumulada);
     if (afiAcumulada + valCarta > AFINIDAD_MAX) {
       if (afiAcumulada < AFINIDAD_MAX) {
         afiAcumulada = AFINIDAD_MAX;
@@ -1860,7 +2093,7 @@ function recalculateTab2() {
   let boletosUsados = 0;
   for (let b = 0; b < boletosQty; b++) {
     if (afiAcumulada >= AFINIDAD_MAX) break;
-    const valBoleto = getTab2UnitVal(400);
+    const valBoleto = getTab2UnitVal(400, afiAcumulada);
     if (afiAcumulada + valBoleto > AFINIDAD_MAX) {
       if (afiAcumulada < AFINIDAD_MAX) {
         afiAcumulada = AFINIDAD_MAX;
@@ -1897,10 +2130,8 @@ function recalculateTab2() {
     }
   }
 
-  const estaEnRangoBuffVisual = zeroLvlTab2 > 0 && afnZeroMeta > 0 && afiAcumulada < afnZeroMeta;
-
-  const valorCartaSubLabel = estaEnRangoBuffVisual ? Math.round(2000 * 1.05) : 2000;
-  const valorBoletoSubLabel = estaEnRangoBuffVisual ? Math.round(400 * 1.05) : 400;
+  const valorCartaSubLabel = getTab2UnitVal(2000, afiAcumulada);
+  const valorBoletoSubLabel = getTab2UnitVal(400, afiAcumulada);
 
   const cartaSubLabel = document.getElementById('p2-carta-sublabel');
   const boletoSubLabel = document.getElementById('p2-boleto-sublabel');
@@ -1923,23 +2154,25 @@ function recalculateTab2() {
   const afiFaltanteGeneral = Math.max(0, AFINIDAD_MAX - afiAcumulada);
   if (p2Necesita) p2Necesita.value = afiFaltanteGeneral.toLocaleString('en-US');
 
-  const nivelCitaRaw = selectedCharaTab2.nivelCita;
+  const rawCita = selectedCharaTab2.nivelCita !== undefined && selectedCharaTab2.nivelCita !== null 
+                  ? String(selectedCharaTab2.nivelCita).trim() 
+                  : "";
+
   let tieneCita = true;
-  let umbralCita = parseInt(nivelCitaRaw, 10);
+  let umbralCita = parseInt(rawCita, 10);
 
-  if (isNaN(umbralCita)) {
-    const texto = String(nivelCitaRaw).toLowerCase();
-    if (texto.includes("no") || texto === "") {
-      tieneCita = false;
-      umbralCita = 0;
-    } else {
-      umbralCita = 4;
-    }
-  }
+  const isZankou = selectedCharaTab2.chara && selectedCharaTab2.chara.toLowerCase().includes('zankou');
+  const t = translations[currentLang];
+  const labelAff = isZankou ? t.obsessionLabel : t.affinityLabel;
 
-  let afnTramo1Meta = 0;
-  if (tieneCita && umbralCita >= 1 && umbralCita <= 10) {
-    afnTramo1Meta = ACUMULADO_HASTA_NIVEL[umbralCita - 1] || 0;
+  if (rawCita.toLowerCase().includes("no") || rawCita === "") {
+    tieneCita = false;
+    umbralCita = 0;
+  } else if (isNaN(umbralCita)) {
+    tieneCita = true;
+    umbralCita = 4;
+  } else {
+    tieneCita = true;
   }
 
   [1, 2, 3].forEach(idx => {
@@ -1948,88 +2181,16 @@ function recalculateTab2() {
     const nubeElem = document.getElementById('p2-nube' + idx);
     const usaNube = nubeElem ? nubeElem.checked : false;
 
+    const afiHeadValue = getTab2UnitVal(baseAfiUnit, afiAcumulada);
+
     const checkboxCita = document.getElementById(`p2-cita${idx}`);
-    const cuentaCita = checkboxCita && checkboxCita.checked && !checkboxCita.disabled;
+    const cuentaCita = checkboxCita ? checkboxCita.checked : true;
 
-    let diasReq = 0;
-    let cantRegalos = 0;
-    let costoTotal = 0;
-
-    const afiHeadValue = estaEnRangoBuffVisual ? Math.round(baseAfiUnit * 1.05) : baseAfiUnit;
-    const afiBufeadaUnit = Math.round(baseAfiUnit * 1.05);
-
-    if (!tieneCita || !cuentaCita) {
-      const regalosPorDia = usaNube ? 2 : 3;
-      const valorNubeBase = 400;
-      const valorNubeBufeada = 420;
-
-      let afiActualSim = afiAcumulada;
-      let diasSim = 0;
-      let regalosSim = 0;
-
-      while (afiActualSim < AFINIDAD_MAX && diasSim < 1000) {
-        diasSim++;
-        
-        const estaEnBuffSim = zeroLvlTab2 > 0 && afnZeroMeta > 0 && afiActualSim < afnZeroMeta;
-        const currentAfiRegalo = estaEnBuffSim ? afiBufeadaUnit : baseAfiUnit;
-        const currentNubeVal = usaNube ? (estaEnBuffSim ? valorNubeBufeada : valorNubeBase) : 0;
-        
-        for (let r = 0; r < regalosPorDia; r++) {
-          if (afiActualSim < AFINIDAD_MAX) {
-            afiActualSim += currentAfiRegalo;
-            regalosSim++;
-          }
-        }
-        
-        if (usaNube && afiActualSim < AFINIDAD_MAX) {
-          afiActualSim += currentNubeVal;
-        }
-      }
-
-      diasReq = diasSim;
-      cantRegalos = regalosSim;
-    } else {
-      let afnFaltanteTramo1 = Math.max(0, afnTramo1Meta - afiAcumulada);
-      let afiAcumuladaDespuesTramo1 = Math.max(afnTramo1Meta, afiAcumulada);
-      let afnFaltanteTramo2 = Math.max(0, AFINIDAD_MAX - afiAcumuladaDespuesTramo1);
-
-      let afiBaseT1 = getZeroBuffValue(zeroLvlTab2, Math.min(10, Math.max(1, umbralCita - 1)), baseAfiUnit);
-      let valorNubeT1 = (zeroLvlTab2 > 0 && umbralCita <= (maxBondZeroLevel + 1)) ? 420 : 400;
-      let afiRegalosDiaT1 = usaNube ? (afiBaseT1 * 2 + valorNubeT1) : (afiBaseT1 * 3);
-      let diasT1 = afiRegalosDiaT1 > 0 ? Math.ceil(afnFaltanteTramo1 / afiRegalosDiaT1) : 0;
-
-      let afiBaseT2 = getZeroBuffValue(zeroLvlTab2, 10, baseAfiUnit);
-      let valorNubeT2 = 400;
-      let afiRegalosDiaT2 = usaNube ? (afiBaseT2 * 2 + valorNubeT2) : (afiBaseT2 * 3);
-      let afiCitaDia = 200;
-      let afiTotalDiaT2 = afiRegalosDiaT2 + afiCitaDia;
-
-      let diasT2 = 0;
-      if (afnFaltanteTramo2 > 0) {
-        diasT2 = afiTotalDiaT2 > 0 ? Math.ceil(afnFaltanteTramo2 / afiTotalDiaT2) : 0;
-      }
-
-      diasReq = diasT1 + diasT2;
-
-      let afiTotalGeneradaSinRegalos = (usaNube ? diasReq * 400 : 0) + (diasT2 * 200);
-      let afiNecesitadaEnRegalos = Math.max(0, (AFINIDAD_MAX - afiAcumulada) - afiTotalGeneradaSinRegalos);
-
-      if (zeroLvlTab2 > 0 && afnZeroMeta > 0) {
-        let afiTargetBuff = Math.min(afiNecesitadaEnRegalos, Math.max(0, afnZeroMeta - afiAcumulada));
-        let regalosT1Buff = afiBufeadaUnit > 0 ? Math.ceil(afiTargetBuff / afiBufeadaUnit) : 0;
-        let afiCubiertaT1 = regalosT1Buff * afiBufeadaUnit;
-
-        let afiRestanteNorm = Math.max(0, afiNecesitadaEnRegalos - afiCubiertaT1);
-        let regalosT2Norm = baseAfiUnit > 0 ? Math.ceil(afiRestanteNorm / baseAfiUnit) : 0;
-
-        cantRegalos = regalosT1Buff + regalosT2Norm;
-      } else {
-        cantRegalos = baseAfiUnit > 0 ? Math.ceil(afiNecesitadaEnRegalos / baseAfiUnit) : 0;
-      }
-    }
-
-    costoTotal = cantRegalos * costUnit;
-    const nubesTotalesUsadas = usaNube ? diasReq : 0;
+    const resultadoCalculo = calcularRequisitosAfinidad(baseAfiUnit, costUnit, usaNube, cuentaCita, tieneCita, umbralCita, zeroLvlTab2, afiAcumulada);
+    const diasReq = resultadoCalculo.diasReq;
+    const cantRegalos = resultadoCalculo.cantRegalos;
+    const costoTotal = resultadoCalculo.costoTotal;
+    const nubesTotalesUsadas = resultadoCalculo.nubesTotalesUsadas;
 
     const headElem = document.getElementById(`p2-afi${idx}-head`);
     const cantElem = document.getElementById(`p2-cant${idx}`);
@@ -2037,6 +2198,8 @@ function recalculateTab2() {
     const costElem = document.getElementById(`p2-cost${idx}`);
     const costTotalElem = document.getElementById(`p2-costototal${idx}`);
     const nubesUsadasElem = document.getElementById(`p2-nubesusadas${idx}`);
+    
+    const citaWrapper = document.getElementById(`p2-cita-wrapper-${idx}`);
 
     if (headElem) headElem.innerHTML = `<img src="${AFFINITY_ICON_URL}" class="affinity-icon" alt="Afinidad"> ${afiHeadValue}`;
     if (cantElem) cantElem.innerText = cantRegalos;
@@ -2044,6 +2207,58 @@ function recalculateTab2() {
     if (costElem) costElem.innerHTML = costUnit.toLocaleString('en-US') + ` <img src="${FONS_ICON_URL}" class="fons-icon" alt="Fons">`;
     if (costTotalElem) costTotalElem.innerHTML = costoTotal.toLocaleString('en-US') + ` <img src="${FONS_ICON_URL}" class="fons-icon" alt="Fons">`;
     if (nubesUsadasElem) nubesUsadasElem.innerText = nubesTotalesUsadas;
+
+    if (citaWrapper) {
+      if (!tieneCita) {
+        citaWrapper.className = "toggle-container";
+        citaWrapper.style.cssText = "display: flex; background-color: rgba(239, 68, 68, 0.15); border: 1px solid #fecaca; color: #ef4444; font-weight: bold; justify-content: center; cursor: default; padding: 10px; border-radius: 8px; margin-bottom: 12px;";
+        citaWrapper.innerHTML = `<span style="font-size: 11px; text-align: center;">${t.sinCitaMsg}</span>`;
+      } else {
+        citaWrapper.style.cssText = "";
+        citaWrapper.className = "toggle-container";
+        citaWrapper.setAttribute("onclick", `toggleCardCheckbox('p2-cita${idx}', event)`);
+
+        const textoCitaLabel = isZankou ? t.contarDuelo : t.contarCita;
+        
+        let isChecked = true;
+        const existingInput = document.getElementById(`p2-cita${idx}`);
+        if (existingInput) {
+          isChecked = existingInput.checked;
+        } else {
+          let savedData = tab2UserState[selectedCharaTab2.chara];
+          if (savedData && savedData[`cita${idx}`] !== undefined) {
+            isChecked = savedData[`cita${idx}`];
+          }
+        }
+
+        citaWrapper.innerHTML = `
+          <span>${textoCitaLabel}</span>
+          <input type="checkbox" id="p2-cita${idx}" ${isChecked ? 'checked' : ''} onchange="onTab2CheckboxChange()" onclick="event.stopPropagation()">
+        `;
+
+        const inputCheck = document.getElementById(`p2-cita${idx}`);
+        const spanTexto = citaWrapper.querySelector('span');
+
+        if (inputCheck) {
+          if (nivelSel >= umbralCita) {
+            inputCheck.disabled = false;
+            citaWrapper.classList.remove('locked-cita');
+            if (spanTexto) spanTexto.innerText = textoCitaLabel;
+          } else {
+            inputCheck.disabled = true;
+            inputCheck.checked = false;
+            citaWrapper.classList.add('locked-cita');
+            if (spanTexto) {
+              if (isZankou) {
+                spanTexto.innerText = currentLang === 'en' ? `Duel available at level ${umbralCita}` : `Duelo disponible en nivel ${umbralCita}`;
+              } else {
+                spanTexto.innerText = currentLang === 'en' ? `Date available at level ${umbralCita}` : `Cita disponible en nivel ${umbralCita}`;
+              }
+            }
+          }
+        }
+      }
+    }
   });
 }
 

@@ -1,6 +1,7 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw4o42FhIcR4mcGG1chHjHDjBu0IMTqyeCsUMrC-XHM_tdfp_QyfzQuZ1p-su4qMjksAA/exec';
 
 let charactersData = [];
+let newsData = [];
 let selectedCharaTab1 = null;
 let selectedCharaTab2 = null;
 let selectedCharaSim = null;
@@ -75,12 +76,18 @@ const translations = {
     tabPersonajes: "General",
     tabCalcular: "Calcular Afinidad",
     tabSimulador: "Simulador",
+    tabNews: "Noticias",
+    tabAbout: "Acerca de",
     headerPersonajesTitle: "GENERAL",
     headerPersonajesDesc: "Consulta los regalos favoritos de cada personaje para planificar tus recursos. Los cálculos de esta pestaña están considerados para llevar la afinidad de nivel 1 al nivel 10.",
     headerCalcularTitle: "CALCULAR AFINIDAD",
     headerCalcularDesc: "Calcula cuántos regalos, nubes y citas te tomará de acuerdo a tu nivel actual de afinidad ingresada.",
     headerSimuladorTitle: "SIMULADOR",
     headerSimuladorDesc: "Simula la progresión de nivel de cualquier personaje de manera dinámica ajustando la cantidad de regalos a tu criterio. Puedes hacerlo de 1 al 10 o ingresando tu afinidad actual en la parte inferior.",
+    headerNewsTitle: "NOTICIAS Y REGISTRO DE CAMBIOS",
+    headerNewsDesc: "Registro histórico de actualizaciones, parches y mejoras aplicadas a la calculadora.",
+    headerAboutTitle: "ACERCA DE LA HERRAMIENTA",
+    headerAboutDesc: "Información general y descargo de responsabilidad.",
     seleccionarEsper: "Seleccionar Esper",
     subtituloInicio: "Usa la rueda del ratón o arrastra para explorar",
     bonoAfinidad: "Bono de afinidad nivel 10",
@@ -142,12 +149,18 @@ const translations = {
     tabPersonajes: "General",
     tabCalcular: "Affinity Calculator",
     tabSimulador: "Simulator",
+    tabNews: "News",
+    tabAbout: "About",
     headerPersonajesTitle: "GENERAL",
     headerPersonajesDesc: "Browse favorite gifts for each character to plan your resources. Calculations in this tab are designed to take affection from level 1 to level 10.",
     headerCalcularTitle: "AFFINITY CALCULATOR",
     headerCalcularDesc: "Calculate how many gifts, fluffy cottons, and dates it will take based on your current affection level.",
-    headerSimuladorTitle: "SIMULADOR",
+    headerSimuladorTitle: "SIMULATOR",
     headerSimuladorDesc: "Simulate level progression dynamically by adjusting gift amounts to your liking, taking your current level and affection into account.",
+    headerNewsTitle: "NEWS & CHANGELOG",
+    headerNewsDesc: "Historical updates, patches, and feature improvements applied to the calculator.",
+    headerAboutTitle: "ABOUT THIS TOOL",
+    headerAboutDesc: "General information and disclaimer.",
     seleccionarEsper: "Select Esper",
     subtituloInicio: "Use mouse wheel or drag to explore",
     bonoAfinidad: "Level 10 Affection Bonus",
@@ -236,7 +249,7 @@ window.onload = function() {
   if (cachedData) {
     try {
       const parsedData = JSON.parse(cachedData);
-      initWeb(parsedData);
+      processPayloadData(parsedData);
     } catch (e) {
       console.error('Error al leer la caché local:', e);
     }
@@ -246,7 +259,7 @@ window.onload = function() {
     .then(response => response.json())
     .then(data => {
       localStorage.setItem('charactersData_cache', JSON.stringify(data));
-      initWeb(data);
+      processPayloadData(data);
     })
     .catch(error => {
       console.error('Error al cargar los datos de Google Sheets:', error);
@@ -255,6 +268,19 @@ window.onload = function() {
       }
     });
 };
+
+function processPayloadData(payload) {
+  if (Array.isArray(payload)) {
+    charactersData = payload;
+    newsData = [];
+  } else if (payload && typeof payload === 'object') {
+    charactersData = payload.characters || [];
+    newsData = payload.news || [];
+  }
+  
+  initWeb(charactersData);
+  renderNews();
+}
 
 function toggleTheme() {
   document.body.classList.toggle('dark-mode');
@@ -293,6 +319,7 @@ function toggleLanguage() {
 
   recalculate();
   renderReporte();
+  renderNews();
 }
 
 function aplicarTraducciones() {
@@ -304,7 +331,7 @@ function aplicarTraducciones() {
   
   const langBtn = document.getElementById('lang-btn');
   if (langBtn) {
-    const globeSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>`;
+    const globeSVG = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10z"></path></svg>`;
     langBtn.innerHTML = `${globeSVG} <span>${currentLang === 'es' ? 'ES' : 'EN'}</span>`;
   }
 
@@ -394,6 +421,45 @@ function initWeb(data) {
       switchTab(savedTab, targetBtn, false);
     }
   }
+}
+
+function renderNews() {
+  const container = document.getElementById('news-feed-container');
+  if (!container) return;
+
+  if (!newsData || newsData.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center; padding: 24px; color: var(--text-muted); font-size: 13px; background: var(--card-bg); border-radius: 12px; border: 1px dashed var(--border-color);">
+        ${currentLang === 'en' ? 'No news registered yet.' : 'No hay noticias registradas por el momento.'}
+      </div>
+    `;
+    return;
+  }
+
+  const reversedNews = [...newsData].reverse();
+
+  container.innerHTML = reversedNews.map(post => {
+    let bullets = [];
+    if (post.news_bulletitems) {
+      bullets = String(post.news_bulletitems).split('||').map(b => b.trim()).filter(b => b.length > 0);
+    }
+
+    const rawDate = post.news_dia || '';
+    const cleanDate = rawDate.length >= 10 ? String(rawDate).substring(0, 10) : rawDate;
+
+    return `
+      <div class="news-post-card">
+        <div class="news-post-header">
+          <h3>${post.news_titulo || ''}</h3>
+          <span class="news-date-badge">${cleanDate}</span>
+        </div>
+        <div class="news-body">
+          ${post.news_contenido ? `<p>${post.news_contenido}</p>` : ''}
+          ${bullets.length > 0 ? `<ul>${bullets.map(item => `<li>${item}</li>`).join('')}</ul>` : ''}
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 function renderZeroSkillComponents() {

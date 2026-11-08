@@ -101,6 +101,11 @@ body {
 .page-header {
   margin-bottom: 20px;
   padding-left: 2px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap; /* Esto permite que baje ordenadamente si la pantalla se encoge */
 }
 
 .page-title {
@@ -939,6 +944,7 @@ select:focus, input:focus {
   border: 1px solid var(--border-color);
   cursor: zoom-in;
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  position: relative;
 }
 
 .item-img-placeholder img {
@@ -956,20 +962,15 @@ select:focus, input:focus {
 }
 
 .affinity-icon {
-  width: 14px !important;
-  height: 14px !important;
-  min-width: 14px !important;
-  min-height: 14px !important;
-  max-width: 14px !important;
-  max-height: 14px !important;
-  vertical-align: middle !important;
+  width: 19px !important;  /* Ajusta el tamaño ideal aquí (ej. 14px o 16px) */
+  height: 19px !important;
   object-fit: contain !important;
-  display: inline-block !important;
-  margin-left: 2px !important;
-  margin-right: 2px !important;
+  vertical-align: middle !important;
+  background: transparent !important; /* Elimina cualquier fondo azul o extraño */
   border: none !important;
-  background: transparent !important;
   box-shadow: none !important;
+  display: inline-block !important;
+  margin-right: 4px;
 }
 
 #image-modal {
@@ -1953,50 +1954,58 @@ select:focus, input:focus {
 }
 
 .sim-slot-display {
-  width: 97px;
-  height: 97px;
-  background: var(--input-bg);
-  border: 2px solid var(--border-color);
+  position: relative;
+  width: 105px;
+  height: 105px;
+  background: transparent;
+  border: none;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
   padding: 4px;
+  overflow: hidden;
 }
 
 .sim-slot-display img {
-  max-width: 100%;
+  max-width: 1550%;
   max-height: 100%;
   object-fit: contain;
   cursor: zoom-in;
 }
 
+/* ====================================================
+   AJUSTES DEL INVENTARIO (ESTILO SLOT DE JUEGO UNIFICADO)
+   ==================================================== */
+
 .sim-inv-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, 1fr); /* 5 slots arriba, 2 abajo */
   gap: 8px;
   width: 100%;
 }
 
 .sim-slot-card {
-  width: 100px;
+  width: 100%;
   height: 130px;
-  background: var(--input-bg);
-  border: 2px solid var(--border-color);
-  border-radius: 8px;
+  background: transparent;
+  border: none;
+  border-radius: 10px;
   position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   overflow: hidden;
   box-sizing: border-box;
-  transition: border-color 0.2s ease, transform 0.2s ease;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
 .sim-slot-card:hover {
   border-color: #ec4899;
   transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(236, 72, 153, 0.25);
 }
 
 .sim-card-img-wrap {
@@ -2005,44 +2014,71 @@ select:focus, input:focus {
   align-items: center;
   justify-content: center;
   position: relative;
-  padding: 0.1px;
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  box-sizing: border-box;
 }
 
-.sim-card-img-wrap img {
-  max-width: 90px;
-  max-height: 90px;
+.sim-card-img-wrap .gift-bg-img {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
   object-fit: contain;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.sim-card-img-wrap .gift-item-img,
+.sim-card-img-wrap img:not(.gift-bg-img) {
+  position: relative;
+  max-width: 80%;
+  max-height: 80%;
+  object-fit: contain;
+  z-index: 2;
   cursor: zoom-in;
 }
 
+/* BADGE DEL INPUT FLOTANTE (CANTIDAD) */
 .sim-card-img-wrap input {
   position: absolute;
-  bottom: 10px;
-  right: 4px;
-  width: 40px;
-  height: 22px;
-  font-size: 14px;
-  font-weight: 800;
+  bottom: 6px;
+  right: 6px;
+  width: 48px;
+  height: 28px;
+  font-size: 15px;
+  font-weight: 900;
   text-align: center;
-  background: #000000;
+  background: rgba(0, 0, 0, 0.85);
   border: 1.5px solid #ec4899;
   color: #ffffff;
   border-radius: 6px;
   outline: none;
   padding: 0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.6);
+  z-index: 10;
 }
 
+/* VALOR DE AFINIDAD INTEGRADO (COHESIVO Y SIN LÍNEA BRUSCA) */
 .sim-affinity-footer {
   width: 100%;
-  background: var(--sidebar-bg);
+  background: rgba(0, 0, 0, 0.35);
   color: var(--text-main);
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 800;
   text-align: center;
-  padding: 1px 0;
-  border-top: 1px solid var(--border-color);
+  padding: 2px 0 6px 0 !important;
+  border-top: none;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
   letter-spacing: 0.5px;
+  z-index: 3;
+  backdrop-filter: blur(2px);
 }
 
 .sim-bond-logo {
@@ -2145,7 +2181,6 @@ select:focus, input:focus {
   color: var(--text-muted) !important;
 }
 
-/* Bloque de cita / duelo bloqueado por nivel (estilo gris) */
 .toggle-container.locked-cita {
   background-color: rgba(148, 163, 184, 0.1);
   border: 1px solid rgba(148, 163, 184, 0.3);
@@ -2154,3 +2189,97 @@ select:focus, input:focus {
   justify-content: space-between;
   align-items: center;
 }
+
+/* CAPAS DE SUPERPOSICIÓN GENERALES (FAVORITOS / OTROS SLOTS) */
+.gift-slot {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  height: 100%;
+}
+
+.gift-bg-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.gift-item-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  z-index: 2;
+}
+
+/* ====================================================
+   DISEÑO RESPONSIVO Y ADAPTABILIDAD PARA PANTALLAS CHICAS
+   ==================================================== */
+
+/* 1. Cabeceras flexibles: Evita que textos y botones colisionen al reducir la ventana */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap; /* Permite que los controles bajen con gracia si el espacio es reducido */
+}
+
+/* 2. Adaptación para pantallas de portátiles y tablets en horizontal (<= 1366px) */
+@media screen and (max-width: 1366px) {
+  .sim-grid-layout {
+    grid-template-columns: 320px minmax(480px, 520px) 100px;
+    gap: 14px;
+  }
+  
+  .sim-block-main {
+    height: auto !important;
+    min-height: 700px;
+  }
+}
+
+/* 3. Adaptación para pantallas o laptops compactas (<= 1150px) */
+@media screen and (max-width: 1150px) {
+  .sim-grid-layout {
+    grid-template-columns: 1fr; /* Apila los bloques principales en columna de forma ordenada */
+    justify-content: center;
+    align-items: center;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .sim-block-character {
+    max-width: 100%;
+    height: 500px;
+  }
+
+  .sim-block-carousel-vertical {
+    flex-direction: row;
+    overflow-x: auto;
+    height: auto;
+    width: 100%;
+    padding: 10px 0;
+  }
+
+  .sim-esper-circle {
+    min-width: 80px;
+    min-height: 80px;
+    width: 80px;
+    height: 80px;
+  }
+}
+
+/* 4. Ajustes finos para la barra de inventario en resoluciones ajustadas */
+@media screen and (max-width: 768px) {
+  .sim-inv-grid {
+    grid-template-columns: repeat(3, 1fr); /* Reduce a 3 columnas los slots si la pantalla es muy chica */
+  }
+}
+

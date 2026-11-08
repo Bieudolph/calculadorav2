@@ -40,11 +40,14 @@ let lastSelectedTab2 = localStorage.getItem('lastSelectedTab2') || '';
 let lastSelectedSim = localStorage.getItem('lastSelectedSim') || '';
 
 const FONS_ICON_URL = 'https://lh3.googleusercontent.com/d/1eFSFZPncsRkZU-yORmU10zoxF5zwjt7T';
-const AFFINITY_ICON_URL = 'https://lh3.googleusercontent.com/d/16Yzy8DsFN4jdaacXLffYAI3MnZAxmmmT';
+const AFFINITY_ICON_URL = 'https://lh3.googleusercontent.com/d/1Z9mfkUazDUY8z7LAoLsGal_JhGtrJL65';
 const CARD_WRITE_IMG_URL = 'https://lh3.googleusercontent.com/d/1C9x-jmc4PuFCqtxZh8xinbZj-oTKR6TX';
 const MOVIE_TICKET_IMG_URL = 'https://lh3.googleusercontent.com/d/14PzrxqsRtv8vZU3cnme0eC2d40PinhVr';
 const SIM_NEW_ITEM_1 = 'https://lh3.googleusercontent.com/d/1dqQm82jdyCUIBGBTSEcaZVMZ4TMOuKPl';
 const SIM_NEW_ITEM_2 = 'https://lh3.googleusercontent.com/d/1kggvA_cInSaqtsSJOLKUZgoGuoplaifp';
+
+const BG_CARTA_URL = 'https://lh3.googleusercontent.com/d/1Sy-J4o3eir_Om4JJ7bjA27_pnOvXZAgM';
+const BG_SPECIAL_ITEMS_URL = 'https://lh3.googleusercontent.com/d/1I4FqYEOsP5gjH3d1gCG90wRmbkj4oYv1';
 
 const EXP_PARA_SUBIR = [500, 1000, 2000, 3500, 5000, 7000, 9000, 12000, 16000];
 const REQUISITOS_NIVEL = [100, 500, 1000, 2000, 3500, 5000, 7000, 9000, 12000, 16000];
@@ -93,15 +96,15 @@ const translations = {
     ingreseAfinidad: "Ingrese su afinidad actual",
     ingreseObsesion: "Ingrese su obsesión actual",
     nivel: "Nivel",
-    cantRegalos: "Cantidad de regalos",
+    cantRegalos: "Regalos necesarios",
     diasFaltantes: "Días faltantes",
     precioUnidad: "Precio por unidad",
     costoTotalFons: "Costo total de Fons",
     nubesUsar: "Nubes a usar",
     cita: "¿Cita?",
-    contarCita: "¿Contar cita?",
+    contarCita: "¿Incluir cita diaria?",
     contarDuelo: "¿Contar duelo?",
-    usarNube: "Usar nube del mueble",
+    usarNube: "¿Incluir nube?",
     sinCitaMsg: "Este personaje no cuenta con sistema de citas",
     reporteTitulo: "Reporte de Recursos Guardados",
     limpiarReporte: "Limpiar",
@@ -376,6 +379,21 @@ function initWeb(data) {
   }
   aplicarTraducciones();
   renderReporte();
+
+  const savedTab = localStorage.getItem('lastActiveTab');
+  if (savedTab) {
+    const targetTabElem = document.getElementById(savedTab);
+    let targetBtn = null;
+    document.querySelectorAll('.nav-sidebar-btn').forEach(btn => {
+      const onclickAttr = btn.getAttribute('onclick');
+      if (onclickAttr && onclickAttr.includes(savedTab)) {
+        targetBtn = btn;
+      }
+    });
+    if (targetTabElem && targetBtn) {
+      switchTab(savedTab, targetBtn, false);
+    }
+  }
 }
 
 function renderZeroSkillComponents() {
@@ -856,13 +874,17 @@ function setupCarouselInteractivity(carousel) {
   }, { passive: false });
 }
 
-function switchTab(tabId, btnElement) {
+function switchTab(tabId, btnElement, saveState = true) {
   document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-sidebar-btn').forEach(el => el.classList.remove('active'));
   
   const targetTab = document.getElementById(tabId);
   if (targetTab) targetTab.classList.add('active');
   if (btnElement) btnElement.classList.add('active');
+
+  if (saveState) {
+    localStorage.setItem('lastActiveTab', tabId);
+  }
 }
 
 function cambiarPersonajeConFlechaTab1(direccion) {
@@ -981,10 +1003,16 @@ function onCharacterChangeTab1(name) {
 
   [1, 2, 3].forEach(idx => {
     const itemImgUrl = getDirectImageUrl(selectedCharaTab1['itemimg_' + idx]);
+    const itemBgUrl = getDirectImageUrl(selectedCharaTab1['itemgiftbg' + idx]);
     const itemContainer1 = document.getElementById(`p1-itemimg-${idx}-container`);
     if (itemContainer1) {
       if (itemImgUrl) {
-        itemContainer1.innerHTML = `<img src="${itemImgUrl}" alt="Item" onclick="openModal('${itemImgUrl}')">`;
+        itemContainer1.innerHTML = `
+          <div class="gift-slot">
+            ${itemBgUrl ? `<img src="${itemBgUrl}" class="gift-bg-img" alt="Fondo">` : ''}
+            <img src="${itemImgUrl}" class="gift-item-img" alt="Item" onclick="openModal('${itemImgUrl}')">
+          </div>
+        `;
       } else {
         itemContainer1.innerHTML = `<span>${translations[currentLang].icono}</span>`;
       }
@@ -1060,10 +1088,16 @@ function onCharacterChangeTab2(name) {
 
   [1, 2, 3].forEach(idx => {
     const itemImgUrl = getDirectImageUrl(selectedCharaTab2['itemimg_' + idx]);
+    const itemBgUrl = getDirectImageUrl(selectedCharaTab2['itemgiftbg' + idx]);
     const itemContainer2 = document.getElementById(`p2-itemimg-${idx}-container`);
     if (itemContainer2) {
       if (itemImgUrl) {
-        itemContainer2.innerHTML = `<img src="${itemImgUrl}" alt="Item" onclick="openModal('${itemImgUrl}')">`;
+        itemContainer2.innerHTML = `
+          <div class="gift-slot">
+            ${itemBgUrl ? `<img src="${itemBgUrl}" class="gift-bg-img" alt="Fondo">` : ''}
+            <img src="${itemImgUrl}" class="gift-item-img" alt="Item" onclick="openModal('${itemImgUrl}')">
+          </div>
+        `;
       } else {
         itemContainer2.innerHTML = `<span>${translations[currentLang].icono}</span>`;
       }
@@ -1368,18 +1402,122 @@ function simActualizarOutfitVisual() {
 function simActualizarRegalosPersonaje() {
   if (!selectedCharaSim) return;
 
-  [1, 2, 3].forEach(idx => {
-    const itemImgUrl = getDirectImageUrl(selectedCharaSim[`itemimg_${idx}`]);
-    const favImg = document.getElementById(`sim-fav-gift-img-${idx}`);
-    if (favImg && itemImgUrl) favImg.src = itemImgUrl;
-  });
+  const favSlotsRow = document.querySelector('.sim-fav-slots-row');
+  if (favSlotsRow) {
+    const cartaImgUrl = CARD_WRITE_IMG_URL;
+    const boletoImgUrl = MOVIE_TICKET_IMG_URL;
+    const item1Img = getDirectImageUrl(selectedCharaSim.itemimg_1);
+    const item2Img = getDirectImageUrl(selectedCharaSim.itemimg_2);
+    const item3Img = getDirectImageUrl(selectedCharaSim.itemimg_3);
+
+    const item1Bg = getDirectImageUrl(selectedCharaSim.itemgiftbg1);
+    const item2Bg = getDirectImageUrl(selectedCharaSim.itemgiftbg2);
+    const item3Bg = getDirectImageUrl(selectedCharaSim.itemgiftbg3);
+
+    favSlotsRow.innerHTML = `
+      <div class="sim-slot-display">
+        <div class="gift-slot">
+          <img src="${BG_CARTA_URL}" class="gift-bg-img" alt="Fondo Carta">
+          <img src="${cartaImgUrl}" class="gift-item-img" alt="Carta" onclick="openModal('${cartaImgUrl}')">
+        </div>
+      </div>
+      <div class="sim-slot-display">
+        <div class="gift-slot">
+          <img src="${BG_SPECIAL_ITEMS_URL}" class="gift-bg-img" alt="Fondo Ticket">
+          <img src="${boletoImgUrl}" class="gift-item-img" alt="Boleto" onclick="openModal('${boletoImgUrl}')">
+        </div>
+      </div>
+      <div class="sim-slot-display">
+        <div class="gift-slot">
+          ${item1Bg ? `<img src="${item1Bg}" class="gift-bg-img" alt="Fondo">` : ''}
+          <img src="${item1Img}" class="gift-item-img" alt="Item 1" onclick="openModal('${item1Img}')">
+        </div>
+      </div>
+      <div class="sim-slot-display">
+        <div class="gift-slot">
+          ${item2Bg ? `<img src="${item2Bg}" class="gift-bg-img" alt="Fondo">` : ''}
+          <img src="${item2Img}" class="gift-item-img" alt="Item 2" onclick="openModal('${item2Img}')">
+        </div>
+      </div>
+      <div class="sim-slot-display">
+        <div class="gift-slot">
+          ${item3Bg ? `<img src="${item3Bg}" class="gift-bg-img" alt="Fondo">` : ''}
+          <img src="${item3Img}" class="gift-item-img" alt="Item 3" onclick="openModal('${item3Img}')">
+        </div>
+      </div>
+    `;
+  }
 
   [1, 2, 3].forEach(idx => {
     const itemImgUrl = getDirectImageUrl(selectedCharaSim[`itemimg_${idx}`]);
-
-    const invImg = document.getElementById(`sim-inv-gift-img-${idx}`);
-    if (invImg && itemImgUrl) invImg.src = itemImgUrl;
+    const itemBgUrl = getDirectImageUrl(selectedCharaSim[`itemgiftbg${idx}`]);
+    const wrap = document.getElementById(`sim-inv-gift-img-${idx}`)?.closest('.sim-card-img-wrap');
+    if (wrap) {
+      const inputElem = wrap.querySelector('input');
+      const inputHtml = inputElem ? inputElem.outerHTML : '';
+      if (itemImgUrl) {
+        wrap.innerHTML = `
+          <div class="gift-slot" style="width: 100%; height: 100%;">
+            ${itemBgUrl ? `<img src="${itemBgUrl}" class="gift-bg-img" alt="Fondo">` : ''}
+            <img src="${itemImgUrl}" class="gift-item-img" id="sim-inv-gift-img-${idx}" alt="Gift ${idx}" onclick="openModal('${itemImgUrl}')" style="max-width: 90px; max-height: 90px; object-fit: contain; cursor: zoom-in;">
+          </div>
+          ${inputHtml}
+        `;
+      }
+    }
   });
+
+  const wrapCarta = document.getElementById('sim-inv-cartas-qty')?.closest('.sim-card-img-wrap');
+  if (wrapCarta) {
+    const inputElem = wrapCarta.querySelector('input');
+    const inputHtml = inputElem ? inputElem.outerHTML : '';
+    wrapCarta.innerHTML = `
+      <div class="gift-slot" style="width: 100%; height: 100%;">
+        <img src="${BG_CARTA_URL}" class="gift-bg-img" alt="Fondo Carta">
+        <img src="${CARD_WRITE_IMG_URL}" class="gift-item-img" alt="Carta" onclick="openModal('${CARD_WRITE_IMG_URL}')" style="max-width: 90px; max-height: 90px; object-fit: contain; cursor: zoom-in;">
+      </div>
+      ${inputHtml}
+    `;
+  }
+
+  const wrapBoleto = document.getElementById('sim-inv-boletos-qty')?.closest('.sim-card-img-wrap');
+  if (wrapBoleto) {
+    const inputElem = wrapBoleto.querySelector('input');
+    const inputHtml = inputElem ? inputElem.outerHTML : '';
+    wrapBoleto.innerHTML = `
+      <div class="gift-slot" style="width: 100%; height: 100%;">
+        <img src="${BG_SPECIAL_ITEMS_URL}" class="gift-bg-img" alt="Fondo Ticket">
+        <img src="${MOVIE_TICKET_IMG_URL}" class="gift-item-img" alt="Boleto" onclick="openModal('${MOVIE_TICKET_IMG_URL}')" style="max-width: 90px; max-height: 90px; object-fit: contain; cursor: zoom-in;">
+      </div>
+      ${inputHtml}
+    `;
+  }
+
+  const wrapNube = document.getElementById('sim-inv-gift-qty-4')?.closest('.sim-card-img-wrap');
+  if (wrapNube) {
+    const inputElem = wrapNube.querySelector('input');
+    const inputHtml = inputElem ? inputElem.outerHTML : '';
+    wrapNube.innerHTML = `
+      <div class="gift-slot" style="width: 100%; height: 100%;">
+        <img src="${BG_SPECIAL_ITEMS_URL}" class="gift-bg-img" alt="Fondo Nube">
+        <img src="${SIM_NEW_ITEM_1}" class="gift-item-img" id="sim-inv-gift-img-4" alt="Nube" onclick="openModal('${SIM_NEW_ITEM_1}')" style="max-width: 90px; max-height: 90px; object-fit: contain; cursor: zoom-in;">
+      </div>
+      ${inputHtml}
+    `;
+  }
+
+  const wrapConcha = document.getElementById('sim-inv-gift-qty-5')?.closest('.sim-card-img-wrap');
+  if (wrapConcha) {
+    const inputElem = wrapConcha.querySelector('input');
+    const inputHtml = inputElem ? inputElem.outerHTML : '';
+    wrapConcha.innerHTML = `
+      <div class="gift-slot" style="width: 100%; height: 100%;">
+        <img src="${BG_SPECIAL_ITEMS_URL}" class="gift-bg-img" alt="Fondo Concha">
+        <img src="${SIM_NEW_ITEM_2}" class="gift-item-img" id="sim-inv-gift-img-5" alt="Concha" onclick="openModal('${SIM_NEW_ITEM_2}')" style="max-width: 90px; max-height: 90px; object-fit: contain; cursor: zoom-in;">
+      </div>
+      ${inputHtml}
+    `;
+  }
 }
 
 function simResetAll() {
@@ -1684,11 +1822,13 @@ function renderReporte() {
     const charaObj = charactersData.find(c => c.chara === item.chara);
     let itemName = item.itemName || '';
     let itemImg = item.itemImg || '';
+    let itemBgImg = '';
 
     if (charaObj && item.itemIndex) {
       const isEn = currentLang === 'en';
       itemName = isEn ? (charaObj['itemname' + item.itemIndex + 'en'] || charaObj['itemname' + item.itemIndex]) : charaObj['itemname' + item.itemIndex];
       itemImg = getDirectImageUrl(charaObj['itemimg_' + item.itemIndex]);
+      itemBgImg = getDirectImageUrl(charaObj['itemgiftbg' + item.itemIndex]);
     }
 
     const isZankouReport = item.chara && item.chara.toLowerCase().includes('zankou');
@@ -1713,7 +1853,10 @@ function renderReporte() {
         </div>
         
         <div class="report-block-item">
-          <img src="${itemImg}" class="report-card-img" alt="Item">
+          <div class="gift-slot" style="width: 40px; height: 40px; flex-shrink: 0;">
+            ${itemBgImg ? `<img src="${itemBgImg}" class="gift-bg-img" alt="Fondo">` : ''}
+            <img src="${itemImg}" class="report-card-img" alt="Item" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+          </div>
           <div class="report-item-details">
             <div class="report-card-itemline">${itemName}</div>
             <div class="report-card-affinity-gain">

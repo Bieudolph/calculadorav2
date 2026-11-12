@@ -51,7 +51,6 @@ const BG_CARTA_URL = 'https://lh3.googleusercontent.com/d/1Sy-J4o3eir_Om4JJ7bjA2
 const BG_SPECIAL_ITEMS_URL = 'https://lh3.googleusercontent.com/d/1I4FqYEOsP5gjH3d1gCG90wRmbkj4oYv1';
 
 const EXP_PARA_SUBIR = [500, 1000, 2000, 3500, 5000, 7000, 9000, 12000, 16000];
-const REQUISITOS_NIVEL = [100, 500, 1000, 2000, 3500, 5000, 7000, 9000, 12000, 16000];
 const ACUMULADO_HASTA_NIVEL = [0, 500, 1500, 3500, 7000, 12000, 19000, 28000, 40000, 56000];
 const AFINIDAD_MAX = 56000;
 
@@ -108,10 +107,13 @@ const translations = {
     precioUnidad: "Precio por unidad",
     costoTotalFons: "Costo total de Fons",
     nubesUsar: "Nubes a usar",
+    elymsUsar: "Regalos de Elyms",
     cita: "¿Cita?",
     contarCita: "¿Incluir cita diaria?",
     contarDuelo: "¿Contar duelo?",
     usarNube: "¿Incluir nube?",
+    usarElyms: "¿Considerar regalo de Elyms?",
+    elymsTooltip: "El regalo pasivo de Elyms otorga un máximo de 100 de afinidad a cualquier personaje (200 si es para ella misma).",
     sinCitaMsg: "Este personaje no cuenta con sistema de citas",
     reporteTitulo: "Reporte de Recursos Guardados",
     limpiarReporte: "Limpiar",
@@ -121,6 +123,7 @@ const translations = {
     giftsAmountText: "Regalos faltantes:",
     datesUsedText: "Cita restantes:",
     cloudsUsedText: "Nubes faltantes:",
+    elymsUsedText: "Elyms faltantes:",
     daysRemainingText: "Días restantes:",
     regalosSinCondicion: "Regalos ilimitados",
     cartaEscritaMano: "Carta escrita a mano",
@@ -142,7 +145,14 @@ const translations = {
     levelLabelShort: "NIVEL",
     affinityLabelShort: "AFINIDAD",
     obsessionLabel: "Obsesión",
-    obsessionLabelUpper: "OBSESIÓN"
+    obsessionLabelUpper: "OBSESIÓN",
+    newsTitle: "Noticias",
+    newsDesc: "Cualquier novedad, registro de cambios o actualización se publicará por aquí.",
+    aboutTitle: "Acerca de",
+    aboutDesc: "Información sobre la herramienta y descargo de responsabilidad.",
+    aboutWhatIsIt: "¿Qué es esto?",
+    aboutDescText: "Esta es una web de utilidad independiente y de código abierto creada por un fan para simular la progresión de afinidad y cálculos de recursos de los personajes.",
+    aboutDisclaimer: "Aviso: Este proyecto es creado por fans y no está afiliado con Neverness to Everness, Hotta Studio o Perfect World Games. Todo el arte y los recursos visuales pertenecen a sus respectivos dueños."
   },
   en: {
     tabInicio: "Home",
@@ -181,10 +191,13 @@ const translations = {
     precioUnidad: "Cost",
     costoTotalFons: "Total Fons cost",
     nubesUsar: "Fluffy Cotton required",
+    elymsUsar: "Elyms' Gifts",
     cita: "Date?",
     contarCita: "Date?",
     contarDuelo: "Duel?",
     usarNube: "Fluffy Cotton?",
+    usarElyms: "Elyms' Gifts?",
+    elymsTooltip: "Elyms' passive gift grants up to 100 affection (200 if given to herself).",
     sinCitaMsg: "This character cannot be dated",
     reporteTitulo: "Saved Resources Report",
     limpiarReporte: "Clear all",
@@ -194,6 +207,7 @@ const translations = {
     giftsAmountText: "Gifts required:",
     datesUsedText: "Dates required:",
     cloudsUsedText: "Fluffy Cotton req.:",
+    elymsUsedText: "Elyms' Gifts req.:",
     daysRemainingText: "Days to go:",
     regalosSinCondicion: "Unlimited Gifts",
     cartaEscritaMano: "A Handwritten Letter",
@@ -215,16 +229,28 @@ const translations = {
     levelLabelShort: "LEVEL",
     affinityLabelShort: "AFFECTION",
     obsessionLabel: "Obsession",
-    obsessionLabelUpper: "OBSESSION"
+    obsessionLabelUpper: "OBSESSION",
+    newsTitle: "News",
+    newsDesc: "Any news, changelogs, or updates will be posted here.",
+    aboutTitle: "About",
+    aboutDesc: "Information about the tool and disclaimer.",
+    aboutWhatIsIt: "What is this?",
+    aboutDescText: "This is an independent, open-source utility website created by a fan to simulate affinity progression and resource calculations for characters.",
+    aboutDisclaimer: "Disclaimer: This project is fan-made and is not affiliated with Neverness to Everness, Hotta Studio, or Perfect World Games. All art and visual assets belong to their respective owners."
   }
 };
 
 let currentLang = 'es';
 
 window.onload = function() {
-  if (localStorage.getItem('theme') === 'light') {
+  const savedTheme = localStorage.getItem('theme') || 'dark';
+  if (savedTheme === 'light') {
+    document.body.classList.remove('dark-mode', 'cappuccino-mode');
+  } else if (savedTheme === 'cappuccino') {
     document.body.classList.remove('dark-mode');
+    document.body.classList.add('cappuccino-mode');
   } else {
+    document.body.classList.remove('cappuccino-mode');
     document.body.classList.add('dark-mode');
   }
   
@@ -283,9 +309,24 @@ function processPayloadData(payload) {
 }
 
 function toggleTheme() {
-  document.body.classList.toggle('dark-mode');
   const isDark = document.body.classList.contains('dark-mode');
-  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  const isCappuccino = document.body.classList.contains('cappuccino-mode');
+
+  if (isDark) {
+    // Pasar a Claro
+    document.body.classList.remove('dark-mode', 'cappuccino-mode');
+    localStorage.setItem('theme', 'light');
+  } else if (!isCappuccino) {
+    // Pasar a Cappuccino
+    document.body.classList.remove('dark-mode');
+    document.body.classList.add('cappuccino-mode');
+    localStorage.setItem('theme', 'cappuccino');
+  } else {
+    // Pasar a Oscuro
+    document.body.classList.remove('cappuccino-mode');
+    document.body.classList.add('dark-mode');
+    localStorage.setItem('theme', 'dark');
+  }
 }
 
 function toggleLanguage() {
@@ -534,7 +575,10 @@ function getZeroBuffValue(zeroLevel, bondLevel, baseValue) {
   return baseValue;
 }
 
-function calcularRequisitosAfinidad(baseAfi, costUnit, usaNube, cuentaCita, tieneCita, umbralCita, zeroLevel, afiInicial = 0) {
+/**
+ * Motor unificado preservando la lógica original de tramos + soporte opcional de Regalos de Elyms.
+ */
+function calcularRequisitosAfinidad(baseAfi, costUnit, usaNube, cuentaCita, tieneCita, umbralCita, zeroLevel, afiInicial = 0, usaElyms = false, charName = '') {
   const maxBondZeroThresholds = { 1: 4, 2: 5, 3: 6, 4: 7, 5: 8 };
   const maxBondZeroLevel = zeroLevel > 0 ? (maxBondZeroThresholds[zeroLevel] || 0) : 0;
   const afnZeroBufeada = maxBondZeroLevel > 0 ? (ACUMULADO_HASTA_NIVEL[maxBondZeroLevel] || 0) : 0;
@@ -544,7 +588,58 @@ function calcularRequisitosAfinidad(baseAfi, costUnit, usaNube, cuentaCita, tien
     afnTramo1Meta = ACUMULADO_HASTA_NIVEL[umbralCita - 1] || 0;
   }
 
+  const isElymsChar = charName && charName.toLowerCase().includes('elyms');
+  const baseElymsAfi = isElymsChar ? 200 : 100;
   const afiBufeadaUnit = Math.round(baseAfi * 1.05);
+
+  if (usaElyms) {
+    let afiActualSim = afiInicial;
+    let diasSim = 0;
+    let regalosSim = 0;
+    let nubesSim = 0;
+    let elymsSim = 0;
+
+    let afnTramoCita = (tieneCita && cuentaCita && umbralCita >= 1 && umbralCita <= 10) ? (ACUMULADO_HASTA_NIVEL[umbralCita - 1] || 0) : 0;
+
+    while (afiActualSim < AFINIDAD_MAX && diasSim < 1000) {
+      diasSim++;
+      const estaEnBuff = zeroLevel > 0 && afnZeroBufeada > 0 && afiActualSim < afnZeroBufeada;
+
+      if (afiActualSim < AFINIDAD_MAX) {
+        const valElyms = estaEnBuff ? Math.round(baseElymsAfi * 1.05) : baseElymsAfi;
+        afiActualSim += valElyms;
+        elymsSim++;
+      }
+
+      if (usaNube && afiActualSim < AFINIDAD_MAX) {
+        const valNube = estaEnBuff ? 420 : 400;
+        afiActualSim += valNube;
+        nubesSim++;
+      }
+
+      const cuposRestantes = 3 - 1 - (usaNube ? 1 : 0);
+      for (let r = 0; r < cuposRestantes; r++) {
+        if (afiActualSim < AFINIDAD_MAX) {
+          const valRegalo = estaEnBuff ? afiBufeadaUnit : baseAfi;
+          afiActualSim += valRegalo;
+          regalosSim++;
+        }
+      }
+
+      if (tieneCita && cuentaCita && afiActualSim < AFINIDAD_MAX && afiActualSim >= afnTramoCita) {
+        afiActualSim += 200;
+      }
+    }
+
+    return {
+      diasReq: diasSim,
+      cantRegalos: regalosSim,
+      costoTotal: regalosSim * costUnit,
+      nubesTotalesUsadas: nubesSim,
+      elymsTotalesUsados: elymsSim
+    };
+  }
+
   let diasReq = 0;
   let cantRegalos = 0;
 
@@ -618,7 +713,7 @@ function calcularRequisitosAfinidad(baseAfi, costUnit, usaNube, cuentaCita, tien
   const costoTotal = cantRegalos * costUnit;
   const nubesTotalesUsadas = usaNube ? diasReq : 0;
 
-  return { diasReq, cantRegalos, costoTotal, nubesTotalesUsadas };
+  return { diasReq, cantRegalos, costoTotal, nubesTotalesUsadas, elymsTotalesUsados: 0 };
 }
 
 function renderDotaCarousel(charactersData) {
@@ -1116,7 +1211,10 @@ function onCharacterChangeTab2(name) {
       nube3: false,
       cita1: false,
       cita2: false,
-      cita3: false
+      cita3: false,
+      elyms1: false,
+      elyms2: false,
+      elyms3: false
     };
   }
 
@@ -1128,8 +1226,10 @@ function onCharacterChangeTab2(name) {
   [1, 2, 3].forEach(idx => {
     const nubeElem = document.getElementById(`p2-nube${idx}`);
     const citaElem = document.getElementById(`p2-cita${idx}`);
+    const elymsElem = document.getElementById(`p2-elyms${idx}`);
     if (nubeElem) nubeElem.checked = !!savedData[`nube${idx}`];
     if (citaElem) citaElem.checked = !!savedData[`cita${idx}`];
+    if (elymsElem) elymsElem.checked = !!savedData[`elyms${idx}`];
   });
   lastUserSelectedLevelTab2 = Number(savedData.nivel) || 1;
 
@@ -1194,6 +1294,9 @@ function guardarEstadoTab2Actual() {
     cita1: document.getElementById('p2-cita1')?.checked || false,
     cita2: document.getElementById('p2-cita2')?.checked || false,
     cita3: document.getElementById('p2-cita3')?.checked || false,
+    elyms1: document.getElementById('p2-elyms1')?.checked || false,
+    elyms2: document.getElementById('p2-elyms2')?.checked || false,
+    elyms3: document.getElementById('p2-elyms3')?.checked || false,
   };
 
   tab2UserState[name] = stateObj;
@@ -1764,6 +1867,7 @@ function guardarEnReporte(idx, event) {
   const diasFaltantesElem = document.getElementById(`p2-dias${idx}`);
   const costoTotalFonsElem = document.getElementById(`p2-costototal${idx}`);
   const nubeElem = document.getElementById(`p2-nube${idx}`);
+  const elymsElem = document.getElementById(`p2-elyms${idx}`);
   const citaCheck = document.getElementById(`p2-cita${idx}`);
 
   const cantRegalos = cantRegalosElem ? cantRegalosElem.innerText : '0';
@@ -1774,7 +1878,10 @@ function guardarEnReporte(idx, event) {
   const afiValor = getZeroBuffValue(zeroLvlTab2, Number(nivelSel), baseAfiUnit);
 
   const usaNube = nubeElem ? nubeElem.checked : false;
+  const usaElyms = elymsElem ? elymsElem.checked : false;
   const cuentaCita = citaCheck ? citaCheck.checked : false;
+
+  const itemImgUrl = getDirectImageUrl(selectedCharaTab2['itemimg_' + idx]);
 
   const nuevoRegistro = {
     id: Date.now() + Math.random(),
@@ -1785,11 +1892,13 @@ function guardarEnReporte(idx, event) {
     afiAcumuladaTexto: `${afiAcumulada.toLocaleString('en-US')} / ${AFINIDAD_MAX.toLocaleString('en-US')}`,
     avatarImg: avatarImg,
     bgCharaImg: bgCharaImg,
+    itemImg: itemImgUrl, 
     afiValor: afiValor,
     cantRegalos: cantRegalos,
     diasFaltantes: diasFaltantes,
     costoTotalFons: costoTotalFons,
     usaNube: usaNube,
+    usaElyms: usaElyms,
     cuentaCita: cuentaCita
   };
 
@@ -1893,7 +2002,7 @@ function renderReporte() {
     if (charaObj && item.itemIndex) {
       const isEn = currentLang === 'en';
       itemName = isEn ? (charaObj['itemname' + item.itemIndex + 'en'] || charaObj['itemname' + item.itemIndex]) : charaObj['itemname' + item.itemIndex];
-      itemImg = getDirectImageUrl(charaObj['itemimg_' + item.itemIndex]);
+      itemImg = item.itemImg || getDirectImageUrl(charaObj['itemimg_' + item.itemIndex]);
       itemBgImg = getDirectImageUrl(charaObj['itemgiftbg' + item.itemIndex]);
     }
 
@@ -1921,7 +2030,7 @@ function renderReporte() {
         <div class="report-block-item">
           <div class="gift-slot" style="width: 40px; height: 40px; flex-shrink: 0;">
             ${itemBgImg ? `<img src="${itemBgImg}" class="gift-bg-img" alt="Fondo">` : ''}
-            <img src="${itemImg}" class="report-card-img" alt="Item" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
+            <img src="${itemImg}" class="gift-item-img" alt="Item" onclick="openModal('${itemImg}')">
           </div>
           <div class="report-item-details">
             <div class="report-card-itemline">${itemName}</div>
@@ -1935,6 +2044,7 @@ function renderReporte() {
           <span>🎁 ${t.giftsAmountText} <strong>${item.cantRegalos}</strong></span>
           ${item.cuentaCita ? `<span>📅 ${t.datesUsedText} <strong>${item.diasFaltantes}</strong></span>` : ''}
           ${item.usaNube ? `<span>☁️ ${t.cloudsUsedText} <strong>${item.diasFaltantes}</strong></span>` : ''}
+          ${item.usaElyms ? `<span>✨ ${t.elymsUsar}: <strong>${item.diasFaltantes}</strong></span>` : ''}
         </div>
         
         <div class="report-card-right-group">
@@ -1990,16 +2100,30 @@ function recalculateTab1() {
     if (!container) return;
 
     const usaNube = document.getElementById('p1-nube' + idx) ? document.getElementById('p1-nube' + idx).checked : false;
+    const usaElyms = document.getElementById('p1-elyms' + idx) ? document.getElementById('p1-elyms' + idx).checked : false;
     const checkboxCita = document.getElementById(`p1-cita${idx}`);
     const cuentaCita = checkboxCita ? (checkboxCita.checked && !checkboxCita.disabled) : false;
 
     const afiDisplay = getZeroBuffValue(zeroLvlTab1, 1, baseAfi);
 
-    const resultadoCalculo = calcularRequisitosAfinidad(baseAfi, costUnit, usaNube, cuentaCita, tieneCita, umbralCita, zeroLvlTab1, 0);
+    const resultadoCalculo = calcularRequisitosAfinidad(
+      baseAfi,
+      costUnit,
+      usaNube,
+      cuentaCita,
+      tieneCita,
+      umbralCita,
+      zeroLvlTab1,
+      0,
+      usaElyms,
+      selectedCharaTab1.chara
+    );
+
     const diasReq = resultadoCalculo.diasReq;
     const cantRegalos = resultadoCalculo.cantRegalos;
     const costoTotal = resultadoCalculo.costoTotal;
     const nubesTotalesUsadas = resultadoCalculo.nubesTotalesUsadas;
+    const elymsTotalesUsados = resultadoCalculo.elymsTotalesUsados;
 
     let citaHtml = '';
     if (tieneCita) {
@@ -2029,9 +2153,20 @@ function recalculateTab1() {
         <input type="checkbox" id="p1-nube${idx}" ${usaNube ? 'checked' : ''} onchange="onTab1CheckboxChange()" onclick="event.stopPropagation()">
       </div>
 
+      <div class="toggle-container-elyms" onclick="toggleCardCheckbox('p1-elyms${idx}', event)">
+        <div class="elyms-label-group">
+          <span>${t.usarElyms}</span>
+          <span class="elyms-info-icon" onclick="event.stopPropagation()">!
+            <span class="elyms-tooltip" data-i18n="elymsTooltip">${t.elymsTooltip}</span>
+          </span>
+        </div>
+        <input type="checkbox" id="p1-elyms${idx}" ${usaElyms ? 'checked' : ''} onchange="onTab1CheckboxChange()" onclick="event.stopPropagation()">
+      </div>
+
       <div class="highlight-box">
         <div class="metric-row"><span class="metric-label">${t.diasFaltantes}</span><span class="metric-value">${diasReq}</span></div>
         ${usaNube ? `<div class="metric-row"><span class="metric-label">${t.nubesUsar}</span><span class="metric-value">${nubesTotalesUsadas}</span></div>` : ''}
+        ${usaElyms ? `<div class="metric-row"><span class="metric-label">${t.elymsUsar}</span><span class="metric-value">${elymsTotalesUsados}</span></div>` : ''}
         <div class="metric-row"><span class="metric-label">${t.cantRegalos}</span><span class="metric-value">${cantRegalos}</span></div>
         <div class="metric-row total-cost-row"><span class="metric-label">${t.costoTotalFons}</span><span class="metric-value">${costoTotal.toLocaleString('en-US')} <img src="${FONS_ICON_URL}" class="fons-icon" alt="Fons"></span></div>
       </div>
@@ -2218,7 +2353,8 @@ function simEnviarDatos() {
 
   [4, 5].forEach(idx => {
     const invCant = Number(document.getElementById(`sim-inv-gift-qty-${idx}`)?.value) || 0;
-    sumarConBuffSim(invCant, 400);
+    const baseAfiUnit = 400;
+    sumarConBuffSim(invCant, baseAfiUnit);
   });
 
   if (afiAcumulada > AFINIDAD_MAX) afiAcumulada = AFINIDAD_MAX;
@@ -2372,7 +2508,6 @@ function recalculateTab2() {
 
   const isZankou = selectedCharaTab2.chara && selectedCharaTab2.chara.toLowerCase().includes('zankou');
   const t = translations[currentLang];
-  const labelAff = isZankou ? t.obsessionLabel : t.affinityLabel;
 
   if (rawCita.toLowerCase().includes("no") || rawCita === "") {
     tieneCita = false;
@@ -2388,18 +2523,33 @@ function recalculateTab2() {
     const baseAfiUnit = Number(selectedCharaTab2['affinity' + idx]) || 0;
     const costUnit = Number(selectedCharaTab2['itemcost_' + idx]) || 0;
     const nubeElem = document.getElementById('p2-nube' + idx);
+    const elymsElem = document.getElementById('p2-elyms' + idx);
     const usaNube = nubeElem ? nubeElem.checked : false;
+    const usaElyms = elymsElem ? elymsElem.checked : false;
 
     const afiHeadValue = getTab2UnitVal(baseAfiUnit, afiAcumulada);
 
     const checkboxCita = document.getElementById(`p2-cita${idx}`);
     const cuentaCita = checkboxCita ? checkboxCita.checked : true;
 
-    const resultadoCalculo = calcularRequisitosAfinidad(baseAfiUnit, costUnit, usaNube, cuentaCita, tieneCita, umbralCita, zeroLvlTab2, afiAcumulada);
+    const resultadoCalculo = calcularRequisitosAfinidad(
+      baseAfiUnit,
+      costUnit,
+      usaNube,
+      cuentaCita,
+      tieneCita,
+      umbralCita,
+      zeroLvlTab2,
+      afiAcumulada,
+      usaElyms,
+      selectedCharaTab2.chara
+    );
+
     const diasReq = resultadoCalculo.diasReq;
     const cantRegalos = resultadoCalculo.cantRegalos;
     const costoTotal = resultadoCalculo.costoTotal;
     const nubesTotalesUsadas = resultadoCalculo.nubesTotalesUsadas;
+    const elymsTotalesUsados = resultadoCalculo.elymsTotalesUsados;
 
     const headElem = document.getElementById(`p2-afi${idx}-head`);
     const cantElem = document.getElementById(`p2-cant${idx}`);
@@ -2407,6 +2557,8 @@ function recalculateTab2() {
     const costElem = document.getElementById(`p2-cost${idx}`);
     const costTotalElem = document.getElementById(`p2-costototal${idx}`);
     const nubesUsadasElem = document.getElementById(`p2-nubesusadas${idx}`);
+    const elymsUsadosElem = document.getElementById(`p2-elymsusados${idx}`);
+    const elymsRowElem = document.getElementById(`p2-elymsusados-row-${idx}`);
     
     const citaWrapper = document.getElementById(`p2-cita-wrapper-${idx}`);
 
@@ -2416,6 +2568,8 @@ function recalculateTab2() {
     if (costElem) costElem.innerHTML = costUnit.toLocaleString('en-US') + ` <img src="${FONS_ICON_URL}" class="fons-icon" alt="Fons">`;
     if (costTotalElem) costTotalElem.innerHTML = costoTotal.toLocaleString('en-US') + ` <img src="${FONS_ICON_URL}" class="fons-icon" alt="Fons">`;
     if (nubesUsadasElem) nubesUsadasElem.innerText = nubesTotalesUsadas;
+    if (elymsUsadosElem) elymsUsadosElem.innerText = elymsTotalesUsados;
+    if (elymsRowElem) elymsRowElem.style.display = usaElyms ? 'flex' : 'none';
 
     if (citaWrapper) {
       if (!tieneCita) {
